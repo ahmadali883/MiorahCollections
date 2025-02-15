@@ -1,12 +1,17 @@
 const express = require('express');
 const dotenv = require('dotenv');
-const connectDB = require('./config/db');
 const path = require('path');
 
-dotenv.config({ path: './config/config.env' });
-connectDB();
+// Load env vars - this must come before importing any config that uses env vars
+dotenv.config({ path: path.join(__dirname, 'config/config.env') });
 
+const connectDB = require('./config/db');
+
+// Initialize Express
 const app = express();
+
+// Connect to database
+connectDB();
 
 app.use(express.json({ extended: false }));
 
