@@ -26,6 +26,9 @@ app.use("/api/orders", require("./routes/order"));
 app.use("/api/address", require("./routes/address"));
 app.use("", require("./routes/stripe"));
 
+// Serve Ionicons locally
+app.use('/ionicons', express.static(path.join(__dirname, 'node_modules/ionicons/dist')));
+
 if (process.env.NODE_ENV === 'production') {
   // Serve static files from the React app
   app.use(express.static(path.join(__dirname, 'client/build')));

@@ -51,7 +51,7 @@ const productSlice = createSlice({
     },
     getFilteredProducts: (state, action) => {
       state.filteredProducts = state.products.filter((item) =>
-        item.categories.at(-1).gender.includes(action.payload.gender)
+        item.categories?.at(-1)?.gender?.includes(action.payload.gender)
       )
     },
     changeImage: (state, action) => {
@@ -96,7 +96,7 @@ const productSlice = createSlice({
     },
     getFilters: (state, action) => {
       // GET LIST OF ALL COLORS FROM PRODUCTS
-      state.colors = Array.from(new Set(state.colors.concat.apply([], (state.filteredProducts.length > 0 ? state.filteredProducts : state.products).map(item => item.categories.at(-1).color)))).sort()
+      state.colors = Array.from(new Set(state.colors.concat.apply([], (state.filteredProducts.length > 0 ? state.filteredProducts : state.products).map(item => item.categories?.at(-1)?.color || [])))).sort()
       // GET LIST OF ALL BRANDS/COMPANIES FROM PRODUCTS 
       state.brands = Array.from(new Set(state.brands.concat.apply([], (state.filteredProducts.length > 0 ? state.filteredProducts : state.products).map(item => item.company)))).sort()
     },
