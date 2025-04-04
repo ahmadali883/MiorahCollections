@@ -58,8 +58,6 @@ router.post(
       const payload = {
         user: {
           id: user.id,
-          // only an admin can take CRUD operations to collections & delete any users
-          // if not an admin, the user can only make CRUD operations to his/her account
           isAdmin: user.isAdmin,
         },
       };
@@ -73,7 +71,11 @@ router.post(
           if (error) throw error;
           const { password, ...others } = user._doc; 
           res.json({
-            token, user: {...others}
+            token, 
+            user: {
+              ...others,
+              isAdmin: user.isAdmin // Explicitly include isAdmin
+            }
           });
         }
       );

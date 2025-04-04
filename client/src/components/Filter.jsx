@@ -4,6 +4,7 @@ import {
   getFilters,
   selectFilters,
   selectSort,
+  getCategories
 } from "../redux/reducers/productSlice";
 
 const Filter = () => {
@@ -11,7 +12,7 @@ const Filter = () => {
   const filter = useSelector((state) => state.product.filter);
   const loading = useSelector((state) => state.product.loading);
   const colors = useSelector((state) => state.product.colors);
-  const brands = useSelector((state) => state.product.brands);
+  const categories = useSelector((state) => state.product.categories);
   const filteredProducts = useSelector(
     (state) => state.product.filteredProducts
   );
@@ -19,9 +20,13 @@ const Filter = () => {
   useEffect(() => {
     if (!loading) {
       dispatch(getFilters());
+      // Only fetch categories if we don't have any yet
+      if (categories.length === 0) {
+        dispatch(getCategories());
+      }
     }
     // eslint-disable-next-line
-  }, [filteredProducts]);
+  }, [loading]); // Changed dependency from filteredProducts to just loading
 
   const handleFilter = (e) => {
     dispatch(
@@ -44,10 +49,11 @@ const Filter = () => {
         </span>
         <div className="flex">
           <select
-            className=" appearance-none px-3 py-2 border border-solid transition ease-in-out m-0 focus:outline-none mr-4 bg-white"
+            className="appearance-none px-3 py-2 border border-solid transition ease-in-out m-0 focus:outline-none mr-4 bg-white"
             aria-label="Default color select"
             name="color"
             onChange={handleFilter}
+            value={filter.color}
           >
             <option value="">Color</option>
             {colors.map((color, index) => (
@@ -57,15 +63,17 @@ const Filter = () => {
             ))}
           </select>
           <select
-            className=" appearance-none px-3 py-2 border border-solid transition ease-in-out m-0 focus:outline-none capitalize bg-white"
-            aria-label="Default company/ brand select"
-            name="company"
+            className="appearance-none px-3 py-2 border border-solid transition ease-in-out m-0 focus:outline-none capitalize bg-white"
+            aria-label="Default category select"
+            name="category"
             onChange={handleFilter}
+            value={filter.category}
           >
-            <option value="">brand</option>
-            {brands.map((brand, index) => (
-              <option key={index} value={brand}>
-                {brand}
+            <option value="">Category</option>
+            {categories.map((category, index) => (
+              // Check if category is a string or an object
+              <option key={index} value={typeof category === 'object' ? category.name : category}>
+                {typeof category === 'object' ? category.name : category}
               </option>
             ))}
           </select>

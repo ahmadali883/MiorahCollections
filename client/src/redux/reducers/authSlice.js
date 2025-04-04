@@ -75,18 +75,60 @@ export const updateUser = createAsyncThunk("auth/updateUser", async (userData, {
 }
 )
 
+// Add this new thunk to load user data on app startup
+export const loadUserFromStorage = createAsyncThunk(
+  'auth/loadUserFromStorage',
+  async (_, { getState, rejectWithValue }) => {
+    try {
+      const { auth } = getState();
+      
+      // Only proceed if we have a token but no user info
+      if (!auth.userToken) {
+        return rejectWithValue('No token available');
+      }
+      
+      if (auth.userInfo) {
+        return auth.userInfo; // Already loaded
+      }
+
+      const config = {
+        headers: {
+          'x-auth-token': auth.userToken,
+        },
+      };
+      
+      const { data } = await axios.get('/api/auth', config);
+      return data;
+    } catch (err) {
+      // If token is invalid, clear it
+      localStorage.removeItem('userToken');
+      return rejectWithValue(err.response?.data || err.message);
+    }
+  }
+);
+
+// Try to get user data from localStorage
+let storedUserInfo = null;
+try {
+  const storedUserJSON = localStorage.getItem('userInfo');
+  if (storedUserJSON) {
+    storedUserInfo = JSON.parse(storedUserJSON);
+  }
+} catch (error) {
+  console.error('Error parsing stored user info:', error);
+}
+
 // initialize userToken from local storage
 const userToken = localStorage.getItem('userToken')
   ? localStorage.getItem('userToken')
   : null
-
 
 const authSlice = createSlice({
   name: "auth",
   initialState: {
     error: false,
     loading: false,
-    userInfo: null,
+    userInfo: storedUserInfo, // Use stored user info if available
     userToken,
     success: false,
     errMsg: '',
@@ -108,6 +150,7 @@ const authSlice = createSlice({
     },
     logout: (state) => {
       localStorage.removeItem('userToken') // deletes token from storage
+      localStorage.removeItem('userInfo') // also remove user info
       state.loading = false
       state.userInfo = null
       state.userToken = null
@@ -137,6 +180,8 @@ const authSlice = createSlice({
       state.userInfo = payload.user
       state.userToken = payload.token
       state.errMsg = ''
+      // Store user info in localStorage
+      localStorage.setItem('userInfo', JSON.stringify(payload.user))
     },
     [loginUser.rejected]: (state, { payload }) => {
       state.loading = false
@@ -152,6 +197,8 @@ const authSlice = createSlice({
       state.loading = false
       state.userInfo = payload
       state.userErrorMsg = ''
+      // Store user info in localStorage
+      localStorage.setItem('userInfo', JSON.stringify(payload))
     },
     [getUserDetails.rejected]: (state, { payload }) => {
       state.loading = false
@@ -174,6 +221,24 @@ const authSlice = createSlice({
       state.userUpdateError = true
       state.userUpdateErrorMsg = payload.msg ? payload.msg : payload
       state.editable = false
+    },
+    // Add handlers for the new loadUserFromStorage thunk
+    [loadUserFromStorage.pending]: (state) => {
+      state.loading = true
+    },
+    [loadUserFromStorage.fulfilled]: (state, { payload }) => {
+      state.loading = false
+      state.userInfo = payload
+      // Store user info in localStorage
+      localStorage.setItem('userInfo', JSON.stringify(payload))
+    },
+    [loadUserFromStorage.rejected]: (state, { payload }) => {
+      state.loading = false
+      // If we get here with a payload, there was an error loading the user
+      // Clear the token if it's invalid
+      if (payload) {
+        state.userToken = null
+      }
     },
   }
 })

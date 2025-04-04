@@ -125,4 +125,32 @@ router.post(
   }
 );
 
+// @ route PUT api/users/:id/admin
+// @ desc  Set or remove admin status for a user
+// @ access Private (Admin only)
+router.put("/:id/admin", verifyTokenAndAdmin, async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    
+    if (!user) {
+      return res.status(404).json({ msg: "User not found" });
+    }
+    
+    // Toggle admin status
+    user.isAdmin = !user.isAdmin;
+    await user.save();
+    
+    res.status(200).json({ 
+      _id: user._id,
+      username: user.username,
+      email: user.email,
+      isAdmin: user.isAdmin,
+      message: `User ${user.username} admin status set to ${user.isAdmin}`
+    });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server Error");
+  }
+});
+
 module.exports = router;
