@@ -1,7 +1,7 @@
 import React from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
-import { deleteItem } from "../../redux/reducers/cartSlice";
+import { deleteItem, emptyCart, clearUserCart } from "../../redux/reducers/cartSlice";
 import { motion, AnimatePresence } from "framer-motion"
 
 const variants = {
@@ -16,6 +16,14 @@ const Cart = () => {
     (state) => state.cart
   );
   const { userInfo } = useSelector((state) => state.auth);
+
+  const handleClearCart = () => {
+    if (userInfo) {
+      dispatch(clearUserCart({ _id: userInfo._id }));
+    } else {
+      dispatch(emptyCart());
+    }
+  };
 
   return (
     <motion.div
@@ -82,7 +90,7 @@ const Cart = () => {
                     </span>
                     <span className="font-bold text-very-dark-blue">
                       {" "}
-                      ${item.itemTotal.toFixed(2)}
+                      ${(item.itemTotal || 0).toFixed(2)}
                     </span>
                   </div>
                 </div>
@@ -94,7 +102,7 @@ const Cart = () => {
               <div className="font-bold flex h-8 my-5 justify-between px-3">
                 <h4 className="text-very-dark-blue text-lg">Total</h4>
                 <p className="text-very-dark-blue text-lg">
-                  ${amountTotal.toFixed(2)}
+                  ${(amountTotal || 0).toFixed(2)}
                 </p>
               </div>
             </div>
@@ -104,6 +112,12 @@ const Cart = () => {
                   Checkout
                 </button>
               </Link>
+              <button 
+                onClick={handleClearCart}
+                className="w-full h-10 bg-light-grayish-blue rounded-lg lg:rounded-xl mb-2 text-grayish-blue flex items-center justify-center hover:bg-grayish-blue hover:text-white transition-all duration-300"
+              >
+                Clear Cart
+              </button>
             </div>
           </>
         ) : (

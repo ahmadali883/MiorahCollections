@@ -55,6 +55,30 @@ export const updateUserCart = createAsyncThunk('cart/updateUserCart', async ({ p
 }
 )
 
+export const clearUserCart = createAsyncThunk('cart/clearUserCart', async ({ _id }, { getState, rejectWithValue }) => {
+  try {
+    const userToken = localStorage.getItem('userToken')
+      ? localStorage.getItem('userToken')
+      : null
+    
+    if (!userToken) return rejectWithValue('User not authenticated');
+    
+    const config = {
+      headers: {
+        'Content-Type': 'application/json',
+        'x-auth-token': userToken,
+      },
+    }
+    
+    // Update cart with empty products array
+    let res = await axios.put(`/api/cart/${_id}`, { products: [] }, config)
+    return []
+  } catch (err) {
+    console.log(err)
+    return rejectWithValue(err.response?.data || 'Error clearing cart')
+  }
+})
+
 const cartSlice = createSlice({
   name: 'cart',
   initialState: {
@@ -168,6 +192,23 @@ const cartSlice = createSlice({
       state.error = true
       state.errMsg = payload.msg ? payload.msg : payload
     },
+    [clearUserCart.pending]: (state) => {
+      state.loading = true
+      state.error = false
+    },
+    [clearUserCart.fulfilled]: (state) => {
+      state.loading = false
+      state.userCartItems = []
+      state.cartItems = []
+      state.amountTotal = 0
+      state.total = 0
+      state.errMsg = ''
+    },
+    [clearUserCart.rejected]: (state, { payload }) => {
+      state.loading = false
+      state.error = true
+      state.errMsg = payload.msg ? payload.msg : payload
+    }
   }
 }
 )
