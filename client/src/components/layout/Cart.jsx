@@ -25,6 +25,10 @@ const Cart = () => {
     }
   };
 
+  // Defensive approach to handle null or undefined values
+  const items = userInfo ? (userCartItems || []) : (cartItems || []);
+  const hasItems = items.length > 0;
+
   return (
     <motion.div
     animate={showCart ? "open" : "closed"}
@@ -36,15 +40,15 @@ const Cart = () => {
       <div
         className={
           "cart-content flex flex-col flex-1 items-center pt-5 " +
-          ((userInfo ? userCartItems : cartItems).length < 1
+          (items.length < 1
             ? "justify-center"
             : "justify-start pt-6")
         }
       >
-        {(userInfo ? userCartItems : cartItems).length > 0 ? (
+        {hasItems ? (
           <>
           <AnimatePresence mode= "sync">
-            {(userInfo ? userCartItems : cartItems).map((item) => (
+            {items.map((item) => (
               <motion.div
                 initial={{ scale: 0.8, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
@@ -53,11 +57,18 @@ const Cart = () => {
                 key={item.id}
                 className="item w-full flex items-center justify-between text-grayish-blue pb-5"
               >
-                <img
-                  src={item.product.img[0]}
-                  alt="product-img"
-                  className="w-14 h-14 rounded-lg "
-                />
+                <div className="item-img h-12 w-12 lg:h-14 lg:w-14 rounded-md overflow-hidden">
+                  {/* Add defensive check for item.product.images */}
+                  {item.product.images && item.product.images.length > 0 ? (
+                    <img
+                      className="object-cover w-full h-full"
+                      src={item.product.images[0].image_url}
+                      alt={item.product.name}
+                    />
+                  ) : (
+                    <div className="bg-gray-200 w-full h-full flex items-center justify-center text-xs">No image</div>
+                  )}
+                </div>
                 <div className="px-3 flex-1">
                   <div className="flex justify-between">
                     <p className="product capitalize font-bold text-md text-dark-grayish-blue">
