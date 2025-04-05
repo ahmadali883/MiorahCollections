@@ -125,18 +125,21 @@ const cartSlice = createSlice({
           if (state.cartItems[i].id === action.payload.product._id) {
             // UPDATE ITS QUANTITY BY ADDING FROM THE CURRENT QUANTITY & ITEM TOTAL STATE
             state.cartItems[i].quantity += state.quantity
-            state.cartItems[i].itemTotal += (action.payload.product.discountPrice * state.quantity)
-
+            // Fix: Use discount_price if available, otherwise use price
+            const itemPrice = action.payload.product.discount_price || action.payload.product.price
+            state.cartItems[i].itemTotal = itemPrice * state.cartItems[i].quantity
           }
         }
       } else {
         // IF ITEM ISN'T IN THE CART
+        // Fix: Calculate price correctly using discount_price or regular price
+        const itemPrice = action.payload.product.discount_price || action.payload.product.price
         state.cartItems = ([...state.cartItems, {
           'id': action.payload.product._id,
           'product': action.payload.product,
           // IF THERE IS A USER OR IF THE USER CART ITEM IS GREATER THAN ONE, CHANGE TO THAT QUANTITY
           'quantity': action.payload.quantity ? action.payload.quantity : state.quantity,
-          'itemTotal': action.payload.product.discountPrice * (action.payload.quantity ? action.payload.quantity : state.quantity)
+          'itemTotal': itemPrice * (action.payload.quantity ? action.payload.quantity : state.quantity)
         }])
       }
     },

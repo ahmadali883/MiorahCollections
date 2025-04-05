@@ -435,11 +435,17 @@ const Checkout = () => {
                       key={item.id}
                       className="item w-full flex items-center justify-between text-grayish-blue pb-5"
                     >
-                      <img
-                        src={item.product.img[0]}
-                        alt="product-img"
-                        className="w-14 h-14 rounded-lg "
-                      />
+                      {item.product.img && item.product.img.length > 0 ? (
+                        <img
+                          src={item.product.img[0]}
+                          alt="product-img"
+                          className="w-14 h-14 rounded-lg "
+                        />
+                      ) : (
+                        <div className="w-14 h-14 flex items-center justify-center bg-gray-200 rounded-lg">
+                          <span className="text-xs text-gray-500">No image</span>
+                        </div>
+                      )}
                       <div className="pl-3 flex-1">
                         <div className="flex justify-between">
                           <p className="product capitalize font-bold text-md text-dark-grayish-blue">
@@ -468,7 +474,7 @@ const Checkout = () => {
                         </div>
                         <div className="price flex justify-between">
                           <span className="">
-                            {item.product.discountPrice} x {item.quantity}
+                            ${item.product.discount_price || item.product.price} x {item.quantity}
                           </span>
                           <span className="font-medium text-very-dark-blue">
                             {" "}
