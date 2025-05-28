@@ -47,7 +47,7 @@ const Register = () => {
       <div className="bg-pale-orange absolute inset-0 h-full -z-20">
         <img
           src={AuthBg}
-          alt="background of sneakers on a wooden board"
+          alt="elegant jewellery display background"
           className="absolute inset-0 h-full w-full object-cover opacity-30"
         />
       </div>

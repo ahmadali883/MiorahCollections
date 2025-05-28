@@ -30,11 +30,11 @@ const Benefits = () => {
             <img src={hand} alt="hand holding dollar" className="w-7 mb-1" />
           </figure>
           <h3 className="text-very-dark-blue font-bold text-xl pt-5 pb-4">
-            Affordable Goods
+            Affordable Luxury
           </h3>
           <p className="text-grayish-blue text-base">
-            The sneakers available are just within the reach of your pocket. No
-            hidden cost. No addtional fee required other than what’s stated.
+            Our artificial jewellery is crafted with premium materials at affordable prices. No
+            hidden costs. No additional fees required other than what's stated.
           </p>
         </div>
         <div className="detail px-4 mb-10 flex flex-col items-center text-center lg:text-left lg:items-start">
@@ -42,11 +42,11 @@ const Benefits = () => {
             <img src={star} alt="star icon" className="w-7" />
           </figure>
           <h3 className="text-very-dark-blue font-bold text-xl pt-5 pb-4">
-            Best Quality
+            Premium Quality
           </h3>
           <p className="text-grayish-blue text-base">
-            From your favorite brand to the latest trends, we sell sneakers only
-            of the finest and durable materials you’d ever find.
+            From classic designs to the latest trends, we offer jewellery pieces crafted
+            with the finest materials and exquisite attention to detail.
           </p>
         </div>
       </div>
