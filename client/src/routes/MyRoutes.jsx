@@ -4,8 +4,6 @@ import Home from "../pages/Home/Home";
 import About from "../pages/About";
 import Collections from "../pages/Collections";
 import Contact from "../pages/Contact";
-import Men from "../pages/Men";
-import Women from "../pages/Women";
 import Login from "../pages/User/Login";
 import Register from "../pages/User/Register";
 import Layout from "../components/layout/Layout";
@@ -38,8 +36,6 @@ const MyRoutes = () => {
         <Route path="/collections" element={<Collections />} />
         <Route path="/collections/:collection" element={<Collections />} />
         <Route path="/products/" element={<Products />} />
-        <Route path="/products/men" element={<Men />} />
-        <Route path="/products/women" element={<Women />} />
         <Route path="/products/:id" element={<ProductPage />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/login" element={user ? <Navigate to="/" replace={true}  /> : <Login />} />
