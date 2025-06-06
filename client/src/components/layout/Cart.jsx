@@ -101,7 +101,7 @@ const Cart = () => {
                     </span>
                     <span className="font-bold text-very-dark-blue">
                       {" "}
-                      ${(item.itemTotal || 0).toFixed(2)}
+                      Rs {(item.itemTotal || 0).toFixed(2)}
                     </span>
                   </div>
                 </div>
@@ -113,7 +113,7 @@ const Cart = () => {
               <div className="font-bold flex h-8 my-5 justify-between px-3">
                 <h4 className="text-very-dark-blue text-lg">Total</h4>
                 <p className="text-very-dark-blue text-lg">
-                  ${(amountTotal || 0).toFixed(2)}
+                  Rs {(amountTotal || 0).toFixed(2)}
                 </p>
               </div>
             </div>

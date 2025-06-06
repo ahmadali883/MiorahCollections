@@ -25,23 +25,10 @@ const ProductDetails = () => {
       <p className="text-dark-grayish-blue pb-6 lg:py-7 lg:leading-6">
         {product.description}
       </p>
-      <div className="amount font-bold flex items-center justify-between lg:flex-col lg:items-start mb-6">
-        <div className="discount-price items-center flex lg:w-1/3 justify-between">
-          <div className="price text-3xl">${product.discount_price || product.price}</div>
-          {product.discount_price && (
-            <div className="discount text-orange bg-pale-orange w-max px-2 rounded mx-5 h-6 lg:mr-0">
-              {Math.floor(
-                ((product.price - product.discount_price) / product.price) * 100
-              )}
-              %
-            </div>
-          )}
+      <div className="amount flex items-center justify-between lg:flex-col lg:items-start mb-6">
+        <div className="price items-center flex lg:w-1/3 justify-between">
+          <div className="price text-3xl font-normal">Rs. {product.price}</div>
         </div>
-        {product.discount_price && (
-          <div className="original-price text-grayish-blue line-through lg:mt-2">
-            ${product.price}
-          </div>
-        )}
       </div>
       <div className="sm:flex lg:mt-8 w-full">
         <div className="quantity-container w-full bg-light-grayish-blue rounded-lg h-14 mb-4 flex items-center justify-between px-6 lg:px-3 font-bold sm:mr-3 lg:mr-5 lg:w-1/3">

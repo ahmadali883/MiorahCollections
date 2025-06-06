@@ -32,17 +32,8 @@ const ProductItem = ({ product, containFilter }) => {
           </h3>
         </Link>
         <div className="flex justify-between items-center text-sm">
-          <div className="discount-price font-bold">
-            ${product.discount_price || product.price}
-          </div>
-          <div className="original-price text-grayish-blue line-through">
-            ${product.price}
-          </div>
-          <div className="discount text-orange bg-pale-orange font-bold w-max px-2 rounded mx-5 h-6">
-            {product.discount_price ? Math.floor(
-              ((product.price - product.discount_price) / product.price) * 100
-            ) : 0}
-            %
+          <div className="price font-bold">
+            Rs. {product.price}
           </div>
         </div>
       </div>

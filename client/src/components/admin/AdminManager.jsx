@@ -8,9 +8,14 @@ const AdminManager = () => {
   const [message, setMessage] = useState({ type: '', text: '' });
   const [searchTerm, setSearchTerm] = useState('');
   
-  const { userToken } = useSelector(state => state.auth);
+  const { userToken, userInfo } = useSelector(state => state.auth);
 
   const fetchUsers = async () => {
+    if (!userInfo?.isAdmin) {
+      setMessage({ type: 'error', text: 'You do not have admin privileges' });
+      return;
+    }
+
     setLoading(true);
     try {
       const config = {
@@ -21,17 +26,23 @@ const AdminManager = () => {
       
       const res = await axios.get('/api/users', config);
       setUsers(res.data);
+      setMessage({ type: 'success', text: 'Users loaded successfully' });
     } catch (err) {
       console.error('Error fetching users', err);
-      setMessage({ type: 'error', text: 'Failed to load users' });
+      setMessage({ 
+        type: 'error', 
+        text: err.response?.data?.msg || 'Failed to load users. Please try again.' 
+      });
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchUsers();
-  }, [userToken]);
+    if (userToken && userInfo?.isAdmin) {
+      fetchUsers();
+    }
+  }, [userToken, userInfo]);
 
   const toggleAdminStatus = async (userId, username, currentStatus) => {
     try {

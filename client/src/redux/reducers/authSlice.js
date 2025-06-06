@@ -27,7 +27,9 @@ export const loginUser = createAsyncThunk("auth/loginUser", async ({ email, pass
     let res = await axios.post("/api/auth", { email, password }, config)
     let data = res.data
 
+    // Store token and user info
     localStorage.setItem('userToken', data.token)
+    localStorage.setItem('userInfo', JSON.stringify(data.user))
     return data
 
   } catch (err) {
@@ -82,13 +84,9 @@ export const loadUserFromStorage = createAsyncThunk(
     try {
       const { auth } = getState();
       
-      // Only proceed if we have a token but no user info
+      // Only proceed if we have a token
       if (!auth.userToken) {
         return rejectWithValue('No token available');
-      }
-      
-      if (auth.userInfo) {
-        return auth.userInfo; // Already loaded
       }
 
       const config = {
@@ -98,10 +96,13 @@ export const loadUserFromStorage = createAsyncThunk(
       };
       
       const { data } = await axios.get('/api/auth', config);
+      // Store updated user info
+      localStorage.setItem('userInfo', JSON.stringify(data));
       return data;
     } catch (err) {
-      // If token is invalid, clear it
+      // If token is invalid, clear everything
       localStorage.removeItem('userToken');
+      localStorage.removeItem('userInfo');
       return rejectWithValue(err.response?.data || err.message);
     }
   }

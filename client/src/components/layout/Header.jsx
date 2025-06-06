@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import logo from "../../assets/logo.svg";
 import menu from "../../assets/icon-menu.svg";
 import avatar from "../../assets/image-avatar.png";
@@ -15,6 +15,7 @@ import {
 import { getUserDetails } from "../../redux/reducers/authSlice";
 import { getUserAddress } from "../../redux/reducers/addressSlice";
 import { getUserOrder } from "../../redux/reducers/orderSlice";
+import { getCategories } from "../../redux/reducers/productSlice";
 
 const Header = () => {
   const dispatch = useDispatch();
@@ -22,9 +23,12 @@ const Header = () => {
   const total = useSelector((state) => state.cart.total);
   const { cartItems, userCartItems } = useSelector((state) => state.cart);
   const { userInfo } = useSelector((state) => state.auth);
+  const { categories } = useSelector((state) => state.product);
+  const [showCategories, setShowCategories] = useState(false);
 
   useEffect(() => {
     dispatch(setTotals());
+    dispatch(getCategories());
     // eslint-disable-next-line
   }, [cartItems]);
 
@@ -119,7 +123,7 @@ const Header = () => {
               <li className="relative h-12 lg:h-inherit">
                 <NavLink
                   onClick={displayMenu}
-                  to="/collections"
+                  to="/"
                   className={({ isActive }) =>
                     "absolute inset-0 mb-5 pt-[2.5px] lg:pt-0 lg:mb-0 lg:mx-4 lg:h-inherit lg:flex lg:items-center cursor-pointer lg:relative lg:before:content-[attr(before)] before:absolute before:-bottom-1 before:left-0 before:h-full before:-z-10 before:lg:z-10 before:lg:h-1 before:bg-orange before:w-0 hover:before:w-full before:transition-all lg:hover:text-very-dark-blue " +
                     (!isActive
@@ -127,8 +131,31 @@ const Header = () => {
                       : "before:w-full text-white lg:text-very-dark-blue")
                   }
                 >
-                  Collections
+                  Home
                 </NavLink>
+              </li>
+              <li 
+                className="relative h-12 lg:h-inherit"
+                onMouseEnter={() => setShowCategories(true)}
+                onMouseLeave={() => setShowCategories(false)}
+              >
+                <div className="absolute inset-0 mb-5 pt-[2.5px] lg:pt-0 lg:mb-0 lg:mx-4 lg:h-inherit lg:flex lg:items-center cursor-pointer lg:relative lg:before:content-[attr(before)] before:absolute before:-bottom-1 before:left-0 before:h-full before:-z-10 before:lg:z-10 before:lg:h-1 before:bg-orange before:w-0 hover:before:w-full before:transition-all lg:hover:text-very-dark-blue">
+                  Categories
+                </div>
+                {showCategories && (
+                  <div className="absolute left-0 -mt-1 w-56 bg-white rounded-md shadow-2xl py-2 z-50 border border-gray-100">
+                    {categories.map((category) => (
+                      <NavLink
+                        key={category._id}
+                        to={`/collections/?collection=${category.name.toLowerCase()}`}
+                        className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-orange hover:text-white transition-colors duration-200"
+                        onClick={displayMenu}
+                      >
+                        {category.name}
+                      </NavLink>
+                    ))}
+                  </div>
+                )}
               </li>
               <li className="relative h-12 lg:h-inherit">
                 <NavLink
@@ -148,7 +175,7 @@ const Header = () => {
               <li className="relative h-12 lg:h-inherit">
                 <NavLink
                   onClick={displayMenu}
-                  to="/contact"
+                  to="/new-arrivals"
                   className={({ isActive }) =>
                     "absolute inset-0 mb-5 pt-[2.5px] lg:pt-0 lg:mb-0 lg:mx-4 lg:h-inherit lg:flex lg:items-center cursor-pointer lg:relative lg:before:content-[attr(before)] before:absolute before:-bottom-1 before:left-0 before:h-full before:-z-10 before:lg:z-10 before:lg:h-1 before:bg-orange before:w-0 hover:before:w-full before:transition-all lg:hover:text-very-dark-blue " +
                     (!isActive
@@ -156,7 +183,7 @@ const Header = () => {
                       : "before:w-full text-white lg:text-very-dark-blue")
                   }
                 >
-                  Contact
+                  New Arrivals
                 </NavLink>
               </li>
             </ul>
@@ -209,13 +236,24 @@ const Header = () => {
                 </button>
               </NavLink>
             ) : (
-              <NavLink to="/user-profile" className="ml-4 lg:ml-0 lg:mt-2">
-                <i className="cursor-pointer text-2xl !leading-none lg:text-xl transition-colors mt-2 text-grayish-blue hover:text-very-dark-blue">
-                  <ion-icon name="person">
-                    <title>Username</title>
-                  </ion-icon>
-                </i>
-              </NavLink>
+              <div className="flex items-center ml-4 lg:ml-0 lg:mt-2">
+                {userInfo?.isAdmin && (
+                  <NavLink to="/admin/dashboard" className="mr-4">
+                    <i className="cursor-pointer text-2xl !leading-none lg:text-xl transition-colors mt-2 text-grayish-blue hover:text-very-dark-blue">
+                      <ion-icon name="grid-outline">
+                        <title>Admin Dashboard</title>
+                      </ion-icon>
+                    </i>
+                  </NavLink>
+                )}
+                <NavLink to="/user-profile">
+                  <i className="cursor-pointer text-2xl !leading-none lg:text-xl transition-colors mt-2 text-grayish-blue hover:text-very-dark-blue">
+                    <ion-icon name="person">
+                      <title>Username</title>
+                    </ion-icon>
+                  </i>
+                </NavLink>
+              </div>
             )}
           </div>
         </div>
