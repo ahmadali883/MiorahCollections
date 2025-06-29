@@ -474,7 +474,7 @@ const Checkout = () => {
                         </div>
                         <div className="price flex justify-between">
                           <span className="">
-                            ${item.product.discount_price || item.product.price} x {item.quantity}
+                            ${item.product.price} x {item.quantity}
                           </span>
                           <span className="font-medium text-very-dark-blue">
                             {" "}
@@ -516,7 +516,7 @@ const Checkout = () => {
                 </h3>
                 <h3 className="text-dark-grayish-blue">Test Card Details</h3>
                 <p className="">
-                  When testing interactively, use a card number, such as 4242
+                  When testing interactively, use a card number, such as 4242
                   4242 4242 4242. Enter the card number in the Dashboard or in
                   any payment form.
                 </p>

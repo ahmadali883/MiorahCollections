@@ -9,8 +9,6 @@ import {
   createUserCart,
   cartDisplay,
   setTotals,
-  updateUserCart,
-  addToCart,
 } from "../../redux/reducers/cartSlice";
 import { getUserDetails } from "../../redux/reducers/authSlice";
 import { getUserAddress } from "../../redux/reducers/addressSlice";

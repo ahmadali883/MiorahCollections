@@ -11,9 +11,7 @@ const variants = {
 
 // Helper function to get the correct price for display
 const getDisplayPrice = (product) => {
-  if (product.discount_price && product.discount_price < product.price) {
-    return product.discount_price;
-  }
+  // Always show the regular price, not the discounted price
   return product.price;
 };
 
@@ -139,9 +137,7 @@ const Cart = () => {
                   </div>
                   <div className="price flex justify-between">
                     <span className="">
-                      Rs {item.product.discount_price && item.product.discount_price < item.product.price 
-                        ? item.product.discount_price 
-                        : item.product.price} x {item.quantity}
+                      Rs {item.product.price} x {item.quantity}
                     </span>
                     <span className="font-bold text-very-dark-blue">
                       Rs {(item.itemTotal || 0).toFixed(2)}

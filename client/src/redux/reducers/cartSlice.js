@@ -75,7 +75,7 @@ export const clearUserCart = createAsyncThunk('cart/clearUserCart', async ({ _id
     }
     
     // Update cart with empty products array
-    let res = await axios.put(`/api/cart/${_id}`, { products: [] }, config)
+    await axios.put(`/api/cart/${_id}`, { products: [] }, config)
     
     // Return empty array to clear the cart
     return []
@@ -101,8 +101,8 @@ export const decrementUserCartItem = createAsyncThunk('cart/decrementUserCartIte
     }
     
     // Get current cart
-    let res = await axios.get(`/api/cart/${_id}`, config)
-    let currentCart = res.data
+    let currentCart = await axios.get(`/api/cart/${_id}`, config)
+    currentCart = currentCart.data
     
     if (!currentCart || !currentCart.products) {
       return rejectWithValue('Cart not found');
@@ -122,9 +122,7 @@ export const decrementUserCartItem = createAsyncThunk('cart/decrementUserCartIte
       updatedProducts[itemIndex] = {
         ...item,
         quantity: item.quantity - 1,
-        itemTotal: (item.product.discount_price && item.product.discount_price < item.product.price 
-          ? item.product.discount_price 
-          : item.product.price) * (item.quantity - 1)
+        itemTotal: item.product.price * (item.quantity - 1)
       };
     } else {
       // Remove item if quantity would become 0
@@ -232,11 +230,7 @@ export const addToUserCart = createAsyncThunk('cart/addToUserCart', async ({ pro
 
 // Helper function to get the correct price
 const getProductPrice = (product) => {
-  // Check if product has discount_price and it's less than regular price
-  if (product.discount_price && product.discount_price < product.price) {
-    return product.discount_price;
-  }
-  // Otherwise use regular price
+  // Always use regular price, not discounted price
   return product.price;
 };
 
@@ -306,6 +300,8 @@ const cartSlice = createSlice({
       // Update totals after modifying cart
       state.total = state.cartItems.map(item => item.quantity).reduce((a, b) => a + b, 0);
       state.amountTotal = state.cartItems.map(item => item.itemTotal).reduce((a, b) => a + b, 0);
+      // Show cart when item is added
+      state.showCart = true;
     },
     deleteItem: (state, action) => {
       // Remove item by product ID instead of title for more reliability
@@ -444,6 +440,8 @@ const cartSlice = createSlice({
       // Update totals based on userCartItems
       state.total = payload.map(item => item.quantity).reduce((a, b) => a + b, 0)
       state.amountTotal = payload.map(item => item.itemTotal).reduce((a, b) => a + b, 0)
+      // Show cart when item is added
+      state.showCart = true;
     },
     [addToUserCart.rejected]: (state, { payload }) => {
       state.loading = false
