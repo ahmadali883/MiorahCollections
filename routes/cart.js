@@ -29,13 +29,12 @@ router.get("/", verifyTokenAndAdmin, async (req, res) => {
 // @ access Private
 router.get("/:id", verifyTokenAndAuthorization, async (req, res) => {
   try {
-    // const cart = await Cart.findOne({userId: req.params.id})
-    const cart = await Cart.findById(req.params.id);
+    const cart = await Cart.findOne({ userId: req.params.id });
+    if (!cart) {
+      return res.status(200).json(null); // Return null if no cart exists
+    }
     res.status(200).json(cart);
   } catch (err) {
-    if (err.name === "CastError") {
-      return res.status(400).json({ msg: "cart doesn't exist" });
-    }
     console.error(err.message);
     res.status(500).send("Server Error");
   }
@@ -48,7 +47,6 @@ router.get("/:id", verifyTokenAndAuthorization, async (req, res) => {
 router.post(
   "/",
   verifyToken,
-  // body("userId", "Please enter a user id").not().isEmpty(),
   async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -56,8 +54,13 @@ router.post(
     }
 
     try {
-      let cart = new Cart(req.body);
+      // Check if cart already exists for this user
+      const existingCart = await Cart.findOne({ userId: req.body.userId });
+      if (existingCart) {
+        return res.status(400).json({ msg: "Cart already exists for this user" });
+      }
 
+      let cart = new Cart(req.body);
       let newCart = await cart.save();
 
       res.status(200).json(newCart);
@@ -73,17 +76,26 @@ router.post(
 // @ access   Private
 router.put("/:id", verifyTokenAndAuthorization , async (req, res) => {
   try {
-    const cart = await Cart.findById(req.params.id);
-    const updatedCart = await Cart.findByIdAndUpdate(
-      req.params.id,
+    const cart = await Cart.findOne({ userId: req.params.id });
+    
+    if (!cart) {
+      // Create new cart if it doesn't exist
+      const newCart = new Cart({
+        userId: req.params.id,
+        products: req.body.products || []
+      });
+      const savedCart = await newCart.save();
+      return res.status(200).json(savedCart);
+    }
+    
+    // Update existing cart
+    const updatedCart = await Cart.findOneAndUpdate(
+      { userId: req.params.id },
       { $set: req.body },
-      { new: true }
+      { new: true, upsert: false }
     );
     res.status(200).json(updatedCart);
   } catch (err) {
-    if (err.name === "CastError") {
-      return res.status(400).json({ msg: "cart doesn't exist" });
-    }
     console.error(err.message);
     res.status(500).send("Server Error");
   }
@@ -94,12 +106,12 @@ router.put("/:id", verifyTokenAndAuthorization , async (req, res) => {
 // @ access   Private
 router.delete("/:id", verifyTokenAndAuthorization, async (req, res) => {
   try {
-    await Cart.findByIdAndDelete(req.params.id);
-    res.status(200).json({ msg: "cart is successfully deleted" });
-  } catch (err) {
-    if (err.name === "CastError") {
-      return res.status(400).json({ msg: "cart doesn't exist" });
+    const result = await Cart.findOneAndDelete({ userId: req.params.id });
+    if (!result) {
+      return res.status(404).json({ msg: "Cart not found" });
     }
+    res.status(200).json({ msg: "Cart is successfully deleted" });
+  } catch (err) {
     console.error(err.message);
     res.status(500).send("Server Error");
   }

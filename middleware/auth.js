@@ -20,8 +20,16 @@ const verifyToken = (req, res, next) => {
     req.user = decoded.user;
     next();
   } catch (error) {
-    console.error(error.message);
-    res.status(403).send("Token is not valid");
+    if (error.name === 'TokenExpiredError') {
+      console.log('jwt expired');
+      return res.status(401).json({ msg: "Token expired, please login again" });
+    } else if (error.name === 'JsonWebTokenError') {
+      console.log('jwt malformed');
+      return res.status(401).json({ msg: "Invalid token" });
+    } else {
+      console.error(error.message);
+      return res.status(401).json({ msg: "Token is not valid" });
+    }
   }
 };
 

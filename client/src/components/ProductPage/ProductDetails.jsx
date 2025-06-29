@@ -1,18 +1,29 @@
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { addToCart, quantityCount } from "../../redux/reducers/cartSlice";
+import { addToCart, addToUserCart, quantityCount } from "../../redux/reducers/cartSlice";
 
 const ProductDetails = () => {
   const dispatch = useDispatch();
   const product = useSelector((state) => state.product.product);
   const quantity = useSelector((state) => state.cart.quantity);
   const cartItems = useSelector((state) => state.cart.cartItems);
+  const { userInfo } = useSelector((state) => state.auth);
   document.title = `${product.name || "Product Details"}`
 
   useEffect(() => {
     dispatch(quantityCount(1));
     // eslint-disable-next-line
   }, [cartItems]);
+
+  const handleAddToCart = () => {
+    if (userInfo) {
+      // For logged-in users, use the async thunk
+      dispatch(addToUserCart({ product, quantity, _id: userInfo._id }));
+    } else {
+      // For guest users, use the local reducer
+      dispatch(addToCart({ product, quantity }));
+    }
+  };
 
   return (
     <>
@@ -57,7 +68,7 @@ const ProductDetails = () => {
         </div>
 
         <button
-          onClick={() => dispatch(addToCart({ product, quantity }))}
+          onClick={handleAddToCart}
           className="cart w-full h-14 bg-orange rounded-lg lg:rounded-xl mb-2 shadow-orange-shadow shadow-2xl text-white flex items-center justify-center lg:w-3/5 hover:opacity-60"
           disabled={product.stock_quantity <= 0}
         >

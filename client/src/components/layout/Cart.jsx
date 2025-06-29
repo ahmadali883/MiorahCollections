@@ -1,7 +1,7 @@
 import React from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
-import { deleteItem, emptyCart, clearUserCart } from "../../redux/reducers/cartSlice";
+import { decrementItem, decrementUserCartItem, deleteItem, deleteUserCartItem, emptyCart, clearUserCart } from "../../redux/reducers/cartSlice";
 import { motion, AnimatePresence } from "framer-motion"
 
 const variants = {
@@ -9,10 +9,17 @@ const variants = {
   closed: { opacity: 0, x: "150%" },
 }
 
+// Helper function to get the correct price for display
+const getDisplayPrice = (product) => {
+  if (product.discount_price && product.discount_price < product.price) {
+    return product.discount_price;
+  }
+  return product.price;
+};
 
 const Cart = () => {
   const dispatch = useDispatch();
-  const { userCartItems, cartItems, amountTotal, showCart } = useSelector(
+  const { userCartItems, cartItems, amountTotal, showCart, loading, error } = useSelector(
     (state) => state.cart
   );
   const { userInfo } = useSelector((state) => state.auth);
@@ -22,6 +29,26 @@ const Cart = () => {
       dispatch(clearUserCart({ _id: userInfo._id }));
     } else {
       dispatch(emptyCart());
+    }
+  };
+
+  const handleDecrementItem = (itemId) => {
+    if (userInfo) {
+      // For logged-in users, update the database
+      dispatch(decrementUserCartItem({ itemId, _id: userInfo._id }));
+    } else {
+      // For guest users, update local state
+      dispatch(decrementItem(itemId));
+    }
+  };
+
+  const handleDeleteItem = (itemId) => {
+    if (userInfo) {
+      // For logged-in users, update the database
+      dispatch(deleteUserCartItem({ itemId, _id: userInfo._id }));
+    } else {
+      // For guest users, update local state
+      dispatch(deleteItem(itemId));
     }
   };
 
@@ -37,6 +64,13 @@ const Cart = () => {
     className="absolute top-20 lg:top-24 bottom-40 inset-x-2 lg:left-auto xl:-right-16 lg:-mr-2 p-5 max-w-xl lg:max-w-sm lg:w-full mx-auto min-h-xs h-fit flex flex-col bg-white z-20 shadow-lg lg:shadow-xl rounded-lg">
       <h3 className="font-bold pb-5">Cart</h3>
       <hr className="text-grayish-blue -mx-5" />
+      
+      {error && (
+        <div className="text-red-500 text-sm mb-3 p-2 bg-red-50 rounded">
+          {error}
+        </div>
+      )}
+      
       <div
         className={
           "cart-content flex flex-col flex-1 items-center pt-5 " +
@@ -45,7 +79,12 @@ const Cart = () => {
             : "justify-start pt-6")
         }
       >
-        {hasItems ? (
+        {loading ? (
+          <div className="flex items-center justify-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange"></div>
+            <span className="ml-2 text-gray-600">Loading cart...</span>
+          </div>
+        ) : hasItems ? (
           <>
           <AnimatePresence mode= "sync">
             {items.map((item) => (
@@ -63,33 +102,36 @@ const Cart = () => {
                     <img
                       className="object-cover w-full h-full"
                       src={item.product.images[0].image_url}
-                      alt={item.product.name}
+                      alt={item.product.name || item.product.title}
                     />
                   ) : (
-                    <div className="bg-gray-200 w-full h-full flex items-center justify-center text-xs">No image</div>
+                    <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                      <span className="text-gray-500 text-xs">No Image</span>
+                    </div>
                   )}
                 </div>
                 <div className="px-3 flex-1">
                   <div className="flex justify-between">
                     <p className="product capitalize font-bold text-md text-dark-grayish-blue">
-                      <a
-                        href={`/products/${item.product._id}`}
+                      <Link
+                        to={`/products/${item.product._id}`}
                         className="cursor-pointer hover:opacity-70 transition"
                       >
-                        {item.product.title}
-                      </a>
+                        {item.product.title || item.product.name}
+                      </Link>
                     </p>
-                    <div className="delete">
+                    <div className="flex items-center space-x-2">
                       <i
-                        onClick={(e) =>
-                          dispatch(
-                            deleteItem(
-                              e.target.parentElement.parentElement
-                                .previousElementSibling.innerText
-                            )
-                          )
-                        }
-                        className="cursor-pointer hover:text-very-dark-blue transition-all"
+                        onClick={() => handleDecrementItem(item.id)}
+                        className="cursor-pointer hover:text-orange transition-all"
+                        title="Remove one item"
+                      >
+                        <ion-icon name="remove-circle-outline"></ion-icon>
+                      </i>
+                      <i
+                        onClick={() => handleDeleteItem(item.id)}
+                        className="cursor-pointer hover:text-red-500 transition-all"
+                        title="Remove all items"
                       >
                         <ion-icon name="trash-outline"></ion-icon>
                       </i>
@@ -97,10 +139,11 @@ const Cart = () => {
                   </div>
                   <div className="price flex justify-between">
                     <span className="">
-                      {item.product.discountPrice} x {item.quantity}
+                      Rs {item.product.discount_price && item.product.discount_price < item.product.price 
+                        ? item.product.discount_price 
+                        : item.product.price} x {item.quantity}
                     </span>
                     <span className="font-bold text-very-dark-blue">
-                      {" "}
                       Rs {(item.itemTotal || 0).toFixed(2)}
                     </span>
                   </div>
@@ -125,9 +168,10 @@ const Cart = () => {
               </Link>
               <button 
                 onClick={handleClearCart}
-                className="w-full h-10 bg-light-grayish-blue rounded-lg lg:rounded-xl mb-2 text-grayish-blue flex items-center justify-center hover:bg-grayish-blue hover:text-white transition-all duration-300"
+                disabled={loading}
+                className="w-full h-10 bg-light-grayish-blue rounded-lg lg:rounded-xl mb-2 text-grayish-blue flex items-center justify-center hover:bg-grayish-blue hover:text-white transition-all duration-300 disabled:opacity-50"
               >
-                Clear Cart
+                {loading ? 'Clearing...' : 'Clear Cart'}
               </button>
             </div>
           </>

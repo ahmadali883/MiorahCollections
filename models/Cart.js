@@ -2,14 +2,15 @@ const mongoose = require("mongoose");
 
 const CartSchema = new mongoose.Schema(
   {
-    _id: {
+    userId: {
       type: mongoose.Schema.ObjectId,
       ref: 'User',
-      required: true
+      required: true,
+      unique: true // Only one cart per user
     },
     products: {
       type: Array,
-      unique: true
+      default: []
     }
   },
   { timestamps: true }

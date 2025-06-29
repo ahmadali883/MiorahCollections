@@ -30,7 +30,7 @@ const Header = () => {
     dispatch(setTotals());
     dispatch(getCategories());
     // eslint-disable-next-line
-  }, [cartItems]);
+  }, [cartItems, userCartItems]);
 
   useEffect(() => {
     if (!userInfo) {
@@ -41,34 +41,11 @@ const Header = () => {
 
   useEffect(() => {
     if (userInfo) {
-      dispatch(createUserCart({ products: cartItems, _id: userInfo._id }));
-      // CHECK IF THE USER ITEM IS ALREADY IN THE GENERAL CART
-      if (userCartItems.length > 0) {
-        userCartItems.length > 0 &&
-          userCartItems.forEach((item) => {
-            if (
-              cartItems
-                .map((citem) => citem.product._id)
-                .includes(item.product._id)
-            ) {
-              console.log("the item is already in the cart");
-            } else {
-              // IF  USER ITEM IS NOT IN THE GENERAL CART, ADD IT
-              dispatch(addToCart({ ...item, quantity: item.quantity }));
-              console.log("the item isnt in the cart");
-            }
-          });
-      }
+      // For logged-in users, always fetch the current cart from database
+      dispatch(createUserCart({ products: [], _id: userInfo._id }));
     }
     // eslint-disable-next-line
-  }, [userInfo, userCartItems.length > 0]);
-
-  useEffect(() => {
-    if (userInfo) {
-      dispatch(updateUserCart({ products: [...cartItems], _id: userInfo._id }));
-    }
-    // eslint-disable-next-line
-  }, [userInfo, cartItems]);
+  }, [userInfo]);
 
   useEffect(() => {
     if (userInfo) {
