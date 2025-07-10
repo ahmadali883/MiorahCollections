@@ -12,7 +12,7 @@ export const getAllProducts = createAsyncThunk(
 export const getProductsByCollection = createAsyncThunk(
   'product/getProductsByCollection',
   async (collection, thunkAPI) => {
-    let res = await axios.get(`/api/products/?collection=${collection}`)
+    let res = await axios.get(`/api/products/?category=${collection}`)
     let productsCollection = res.data
     return productsCollection
   })

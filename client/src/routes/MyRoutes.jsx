@@ -3,6 +3,7 @@ import { Route, Routes, Navigate } from "react-router-dom";
 import Home from "../pages/Home/Home";
 import About from "../pages/About";
 import Collections from "../pages/Collections";
+import Categories from "../pages/Categories";
 import Contact from "../pages/Contact";
 import Login from "../pages/User/Login";
 import Register from "../pages/User/Register";
@@ -33,6 +34,7 @@ const MyRoutes = () => {
         <Route path='*' element={<NotFound />} />
         <Route path="/" element={<Home />} />
         <Route path="/about" element={<About />} />
+        <Route path="/categories" element={<Categories />} />
         <Route path="/collections" element={<Collections />} />
         <Route path="/collections/:collection" element={<Collections />} />
         <Route path="/products/" element={<Products />} />

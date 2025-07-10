@@ -114,15 +114,23 @@ const Header = () => {
                 onMouseEnter={() => setShowCategories(true)}
                 onMouseLeave={() => setShowCategories(false)}
               >
-                <div className="absolute inset-0 mb-5 pt-[2.5px] lg:pt-0 lg:mb-0 lg:mx-4 lg:h-inherit lg:flex lg:items-center cursor-pointer lg:relative lg:before:content-[attr(before)] before:absolute before:-bottom-1 before:left-0 before:h-full before:-z-10 before:lg:z-10 before:lg:h-1 before:bg-orange before:w-0 hover:before:w-full before:transition-all lg:hover:text-very-dark-blue">
+                <NavLink
+                  to="/categories"
+                  className={({ isActive }) =>
+                    "absolute inset-0 mb-5 pt-[2.5px] lg:pt-0 lg:mb-0 lg:mx-4 lg:h-inherit lg:flex lg:items-center cursor-pointer lg:relative lg:before:content-[attr(before)] before:absolute before:-bottom-1 before:left-0 before:h-full before:-z-10 before:lg:z-10 before:lg:h-1 before:bg-orange before:w-0 hover:before:w-full before:transition-all lg:hover:text-very-dark-blue " +
+                    (!isActive
+                      ? ""
+                      : "before:w-full text-white lg:text-very-dark-blue")
+                  }
+                >
                   Categories
-                </div>
+                </NavLink>
                 {showCategories && (
                   <div className="absolute left-0 -mt-1 w-56 bg-white rounded-md shadow-2xl py-2 z-50 border border-gray-100">
                     {categories.map((category) => (
                       <NavLink
                         key={category._id}
-                        to={`/collections/?collection=${category.name.toLowerCase()}`}
+                        to={`/collections/?category=${category._id}`}
                         className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-orange hover:text-white transition-colors duration-200"
                         onClick={displayMenu}
                       >

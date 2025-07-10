@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { getProductsByCollection } from '../../redux/reducers/productSlice';
 
 // Dummy images for categories
@@ -15,24 +15,37 @@ const categoryImages = {
 
 const CollectionsCards = () => {
   const dispatch = useDispatch();
+  const { categories } = useSelector(state => state.product);
 
-  const categories = [
-    { name: 'Bracelet', id: 'bracelet' },
-    { name: 'Necklace', id: 'necklace' },
-    { name: 'Rings', id: 'rings' },
-    { name: 'Earrings', id: 'earrings' },
-    { name: 'Pendants', id: 'pendants' },
-    { name: 'Handcuffs', id: 'handcuffs' },
-    { name: 'Bridal Sets', id: 'bridal-sets' }
+  // Map category names to their IDs for filtering
+  const categoryIdMap = {
+    'Bracelet': '67f0496e4f822be73f76412c',
+    'Necklace': '6836f438150daf6600a3a155',
+    'Rings': '6836f438150daf6600a3a157',
+    'Earrings': '6836f439150daf6600a3a159',
+    'Pendants': '6836f439150daf6600a3a15b',
+    'Handcuffs': '6836f43a150daf6600a3a15d',
+    'Bridal Sets': '6836f43a150daf6600a3a15f'
+  };
+
+  // Use categories from Redux store if available, otherwise fall back to hardcoded list
+  const displayCategories = categories.length > 0 ? categories : [
+    { name: 'Bracelet', _id: '67f0496e4f822be73f76412c' },
+    { name: 'Necklace', _id: '6836f438150daf6600a3a155' },
+    { name: 'Rings', _id: '6836f438150daf6600a3a157' },
+    { name: 'Earrings', _id: '6836f439150daf6600a3a159' },
+    { name: 'Pendants', _id: '6836f439150daf6600a3a15b' },
+    { name: 'Handcuffs', _id: '6836f43a150daf6600a3a15d' },
+    { name: 'Bridal Sets', _id: '6836f43a150daf6600a3a15f' }
   ];
 
   return (
     <div className='collections-wrapper flex flex-wrap mt-12 justify-center mb-3 lg:mb-12'>
-      {categories.map((category) => (
+      {displayCategories.map((category) => (
         <Link 
-          key={category.id}
-          to={`/collections/?collection=${category.id}`} 
-          onClick={() => dispatch(getProductsByCollection(category.id))}
+          key={category._id}
+          to={`/collections/?category=${category._id}`} 
+          onClick={() => dispatch(getProductsByCollection(category._id))}
         >
           <div
             before={category.name}
@@ -40,7 +53,7 @@ const CollectionsCards = () => {
           >
             <picture className='mx-auto'>
               <img 
-                src={categoryImages[category.id]} 
+                src={categoryImages[category.name.toLowerCase().replace(' ', '-')] || categoryImages.bracelet} 
                 alt={`${category.name} collection`} 
                 className='p-4 xl:p-0 w-full h-full object-cover'
               />
