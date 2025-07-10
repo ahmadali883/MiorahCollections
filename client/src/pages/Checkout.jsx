@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
-import { deleteItem, cartDisplay } from "../redux/reducers/cartSlice";
+import { deleteItem, deleteUserCartItem, cartDisplay } from "../redux/reducers/cartSlice";
 import { useForm } from "react-hook-form";
-import StripePay from "../components/StripePay";
 import Loading from "../components/Loading";
 
 const Checkout = () => {
@@ -19,11 +18,29 @@ const Checkout = () => {
   const { addresses } = useSelector((state) => state.address);
   const [formData, setFormData] = useState("");
   const [disabled, setDisabled] = useState(false);
+  const [showAddressForm, setShowAddressForm] = useState(false);
+  const [orderPlaced, setOrderPlaced] = useState(false);
+  const [selectedAddress, setSelectedAddress] = useState(null);
+  const [addressFormData, setAddressFormData] = useState({
+    firstname: "",
+    lastname: "",
+    streetAddress: "",
+    city: "",
+    state: "",
+    country: "",
+    phone: "",
+    zipcode: ""
+  });
 
   useEffect(() => {
     dispatch(cartDisplay(false));
+    // Set default selected address
+    if (addresses.length > 0) {
+      const defaultAddress = addresses.find(addr => addr.checked) || addresses[0];
+      setSelectedAddress(defaultAddress);
+    }
     // eslint-disable-next-line
-  }, []);
+  }, [addresses]);
 
   const {
     register,
@@ -31,10 +48,88 @@ const Checkout = () => {
     formState: { errors },
   } = useForm();
 
+  // Address form validation
+  const {
+    register: registerAddress,
+    handleSubmit: handleAddressSubmit,
+    formState: { errors: addressErrors },
+    reset: resetAddressForm,
+  } = useForm();
+
   const submitForm = (data) => {
     setFormData(data);
     setDisabled(true);
     return data;
+  };
+
+  const handleDeleteItem = (itemId) => {
+    if (userInfo) {
+      dispatch(deleteUserCartItem({ itemId, _id: userInfo._id }));
+    } else {
+      dispatch(deleteItem(itemId));
+    }
+  };
+
+  const handleAddressFormChange = (e) => {
+    setAddressFormData({
+      ...addressFormData,
+      [e.target.name]: e.target.value
+    });
+  };
+
+  const handleSaveAddress = (data) => {
+    // Here you would dispatch an action to save the address
+    // For now, we'll just simulate saving
+    console.log("Saving address:", data);
+    
+    // Reset form and hide it
+    resetAddressForm();
+    setShowAddressForm(false);
+    setAddressFormData({
+      firstname: "",
+      lastname: "",
+      streetAddress: "",
+      city: "",
+      state: "",
+      country: "",
+      phone: "",
+      zipcode: ""
+    });
+    
+    // In a real app, you would dispatch an action like:
+    // dispatch(saveUserAddress({ userId: userInfo._id, address: data }));
+  };
+
+  const handleAddressSelection = (address) => {
+    setSelectedAddress(address);
+  };
+
+  const handlePlaceOrder = () => {
+    if (!canPlaceOrder()) {
+      alert("Please complete all required information before placing the order.");
+      return;
+    }
+
+    // Prepare order data
+    const orderData = {
+      items: userInfo ? userCartItems : cartItems,
+      total: amountTotal + (amountTotal >= 2000 ? 0 : 200),
+      shippingAddress: userInfo ? selectedAddress : formData,
+      customerInfo: userInfo || formData,
+      paymentMethod: "cash_on_delivery"
+    };
+
+    console.log("Placing order:", orderData);
+    setOrderPlaced(true);
+    
+    // Here you would dispatch an action to create the order
+    // dispatch(createOrder(orderData));
+  };
+
+  const canPlaceOrder = () => {
+    const hasItems = userInfo ? userCartItems?.length > 0 : cartItems?.length > 0;
+    const hasAddress = userInfo ? selectedAddress : formData;
+    return hasItems && hasAddress && !orderPlaced;
   };
 
   return (
@@ -344,84 +439,231 @@ const Checkout = () => {
                     <h3 className="text-lg font-bold text-very-dark-blue">
                       Delivery Information
                     </h3>
-                    {addresses.length > 0 && (
-                      <Link to="/user-profile/addresses">
-                        <p className="text-sm border-b border-b-orange">
-                          Change Default Address
-                        </p>
-                      </Link>
-                    )}
+                    <button
+                      onClick={() => setShowAddressForm(!showAddressForm)}
+                      className="text-sm border-b border-b-orange hover:border-b-transparent transition-all"
+                    >
+                      {showAddressForm ? 'Hide Address Form' : 'Add New Address'}
+                    </button>
                   </div>
+
+                  {/* Address Form for logged-in users */}
+                  {showAddressForm && (
+                    <div className="mb-6 p-4 border border-gray-200 rounded-lg bg-gray-50">
+                      <h4 className="text-md font-semibold text-very-dark-blue mb-3">
+                        Add New Address
+                      </h4>
+                      <form onSubmit={handleAddressSubmit(handleSaveAddress)} className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        <div className="relative">
+                          <input
+                            type="text"
+                            placeholder="First Name"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-orange"
+                            {...registerAddress("firstname", { required: "First name is required" })}
+                          />
+                          {addressErrors.firstname && (
+                            <p className="text-sm text-red-500 mt-1">{addressErrors.firstname.message}</p>
+                          )}
+                        </div>
+                        <div className="relative">
+                          <input
+                            type="text"
+                            placeholder="Last Name"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-orange"
+                            {...registerAddress("lastname", { required: "Last name is required" })}
+                          />
+                          {addressErrors.lastname && (
+                            <p className="text-sm text-red-500 mt-1">{addressErrors.lastname.message}</p>
+                          )}
+                        </div>
+                        <div className="sm:col-span-2">
+                          <input
+                            type="text"
+                            placeholder="Street Address"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-orange"
+                            {...registerAddress("streetAddress", { required: "Street address is required" })}
+                          />
+                          {addressErrors.streetAddress && (
+                            <p className="text-sm text-red-500 mt-1">{addressErrors.streetAddress.message}</p>
+                          )}
+                        </div>
+                        <div>
+                          <input
+                            type="text"
+                            placeholder="City"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-orange"
+                            {...registerAddress("city", { required: "City is required" })}
+                          />
+                          {addressErrors.city && (
+                            <p className="text-sm text-red-500 mt-1">{addressErrors.city.message}</p>
+                          )}
+                        </div>
+                        <div>
+                          <input
+                            type="text"
+                            placeholder="State"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-orange"
+                            {...registerAddress("state", { required: "State is required" })}
+                          />
+                          {addressErrors.state && (
+                            <p className="text-sm text-red-500 mt-1">{addressErrors.state.message}</p>
+                          )}
+                        </div>
+                        <div>
+                          <input
+                            type="text"
+                            placeholder="Country"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-orange"
+                            {...registerAddress("country", { required: "Country is required" })}
+                          />
+                          {addressErrors.country && (
+                            <p className="text-sm text-red-500 mt-1">{addressErrors.country.message}</p>
+                          )}
+                        </div>
+                        <div>
+                          <input
+                            type="text"
+                            placeholder="Phone"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-orange"
+                            {...registerAddress("phone", { required: "Phone is required" })}
+                          />
+                          {addressErrors.phone && (
+                            <p className="text-sm text-red-500 mt-1">{addressErrors.phone.message}</p>
+                          )}
+                        </div>
+                        <div>
+                          <input
+                            type="text"
+                            placeholder="Zip Code"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-orange"
+                            {...registerAddress("zipcode", { required: "Zip code is required" })}
+                          />
+                          {addressErrors.zipcode && (
+                            <p className="text-sm text-red-500 mt-1">{addressErrors.zipcode.message}</p>
+                          )}
+                        </div>
+                        <div className="sm:col-span-2 flex gap-2">
+                          <button
+                            type="submit"
+                            className="px-4 py-2 bg-orange text-white rounded-md hover:opacity-90"
+                          >
+                            Save Address
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setShowAddressForm(false)}
+                            className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </form>
+                    </div>
+                  )}
+
                   <div className="border-t border-gray-200">
-                    {/* CHECKING IF THE USER HAS A DEFAULT ADDRESS OR EVEN HAVE ANY ADDRESSES AT ALL */}
                     {addresses.length > 0 ? (
-                      // FIRST IF THE USER HAS ANY ADDRESSES
-                      <>
-                        {/* CHECK IF THERE IS A DEFAULT ADDRESS */}
-                        {addresses.filter((address) => address.checked).length >
-                        0 ? (
-                          <>
-                            {addresses
-                              .filter((address) => address.checked)
-                              .map((address) => (
-                                <div
-                                  key={address._id}
-                                  className="text-dark-grayish-blue mt-6"
-                                >
-                                  <p className="text-very-dark-blue">
+                      <div className="mt-6">
+                        <h4 className="text-md font-semibold text-very-dark-blue mb-3">
+                          Select Delivery Address
+                        </h4>
+                        <div className="space-y-3">
+                          {addresses.map((address) => (
+                            <div
+                              key={address._id}
+                              className={`p-4 border rounded-lg cursor-pointer transition-all ${
+                                selectedAddress?._id === address._id
+                                  ? 'border-orange bg-orange-50'
+                                  : 'border-gray-200 hover:border-gray-300'
+                              }`}
+                              onClick={() => handleAddressSelection(address)}
+                            >
+                              <div className="flex items-start justify-between">
+                                <div className="text-dark-grayish-blue">
+                                  <p className="text-very-dark-blue font-medium">
                                     {address.firstname} {address.lastname}
                                   </p>
                                   <p className="">{address.streetAddress}</p>
                                   <p className="">
-                                    {address.city}, {address.state}
+                                    {address.city}, {address.state} {address.zipcode}
                                   </p>
                                   <p className="">{address.country}</p>
                                   <p className="">{address.phone}</p>
                                 </div>
-                              ))}
-                          </>
-                        ) : (
-                          // IF NO DEFAULT ADDRESS, SET THE DELIVERY INFO TO THE USER'S FIRST ADDRESS
-                          <>
-                            <div
-                              key={addresses[0]._id}
-                              className="text-dark-grayish-blue mt-6"
-                            >
-                              <p className="text-very-dark-blue">
-                                {addresses[0].firstname} {addresses[0].lastname}
-                              </p>
-                              <p className="">{addresses[0].streetAddress}</p>
-                              <p className="">
-                                {addresses[0].city}, {addresses[0].state}
-                              </p>
-                              <p className="">{addresses[0].country}</p>
-                              <p className="">{addresses[0].phone}</p>
+                                <div className={`w-4 h-4 rounded-full border-2 ${
+                                  selectedAddress?._id === address._id
+                                    ? 'border-orange bg-orange'
+                                    : 'border-gray-300'
+                                }`}>
+                                  {selectedAddress?._id === address._id && (
+                                    <div className="w-full h-full rounded-full bg-white transform scale-50"></div>
+                                  )}
+                                </div>
+                              </div>
                             </div>
-                          </>
-                        )}
-                      </>
+                          ))}
+                        </div>
+                      </div>
                     ) : (
-                      // IF NO ADDRESS
-                      <>
-                        <Link to="/user-profile/addresses">
-                          <p className="w-fit mt-8 mb-6 text-very-dark-blue border-b border-b-orange hover:border-b-transparent transition-all">
-                            Please Add An Address
-                          </p>
-                        </Link>
-                      </>
+                      <div className="mt-6">
+                        <p className="text-gray-500 mb-4">No addresses saved. Please add an address to continue.</p>
+                        <button
+                          onClick={() => setShowAddressForm(true)}
+                          className="w-fit px-4 py-2 bg-orange text-white rounded-md hover:opacity-90 transition-all"
+                        >
+                          Add An Address
+                        </button>
+                      </div>
                     )}
                   </div>
                 </div>
               )}
-              {((userInfo && addresses.length > 0) || !userInfo) && (
-                <div className="payment mt-12 ">
-                  <h3 className="text-lg font-bold text-very-dark-blue pb-4 mb-10 border-b border-gray-200">
+              {((userInfo && (addresses.length > 0 || showAddressForm)) || !userInfo) && (
+                <div className="payment mt-12">
+                  <h3 className="text-lg font-bold text-very-dark-blue pb-4 mb-6 border-b border-gray-200">
                     Payment Details
                   </h3>
-                  <StripePay formData={formData} />
+                  <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
+                    <h4 className="text-md font-semibold mb-2">Cash on Delivery</h4>
+                    <p className="text-dark-grayish-blue text-sm">
+                      You will pay for your order in cash when it is delivered to your address.
+                    </p>
+                  </div>
+                  
+                  {/* Place Order Button */}
+                  <div className="mt-8">
+                    {orderPlaced ? (
+                      <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                        <div className="flex items-center">
+                          <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center mr-3">
+                            <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/>
+                            </svg>
+                          </div>
+                          <div>
+                            <h4 className="text-green-800 font-semibold">Order Placed Successfully!</h4>
+                            <p className="text-green-700 text-sm">Thank you for your order. You will receive a confirmation email shortly.</p>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={handlePlaceOrder}
+                        disabled={!canPlaceOrder()}
+                        className={`w-full py-3 px-4 rounded-md font-medium transition-all ${
+                          canPlaceOrder()
+                            ? 'bg-orange text-white hover:opacity-90 shadow-[inset_0_0_0_0_#ffede1] hover:shadow-[inset_0_-4rem_0_0_#ffede1] hover:text-orange'
+                            : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                        }`}
+                      >
+                        {!canPlaceOrder() ? 'Complete Information to Place Order' : `Place Order - Rs ${(amountTotal + (amountTotal >= 2000 ? 0 : 200)).toFixed(2)}`}
+                      </button>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
+            
             {/* <!-- Order summary --> */}
             <div className="order-1 lg:order-2 flex-1 w-auto mt-16 sm:mt-10 lg:mt-4">
               <h3 className="text-lg font-bold text-very-dark-blue">
@@ -435,11 +677,11 @@ const Checkout = () => {
                       key={item.id}
                       className="item w-full flex items-center justify-between text-grayish-blue pb-5"
                     >
-                      {item.product.img && item.product.img.length > 0 ? (
+                      {item.product.images && item.product.images.length > 0 ? (
                         <img
-                          src={item.product.img[0]}
+                          src={item.product.images[0].image_url}
                           alt="product-img"
-                          className="w-14 h-14 rounded-lg "
+                          className="w-14 h-14 rounded-lg object-cover"
                         />
                       ) : (
                         <div className="w-14 h-14 flex items-center justify-center bg-gray-200 rounded-lg">
@@ -453,20 +695,14 @@ const Checkout = () => {
                               to={`/products/${item.product._id}`}
                               className="cursor-pointer hover:opacity-70 transition"
                             >
-                              {item.product.title}
+                              {item.product.name || item.product.title}
                             </Link>
                           </p>
                           <div className="delete pl-2">
                             <i
-                              onClick={(e) =>
-                                dispatch(
-                                  deleteItem(
-                                    e.target.parentElement.parentElement
-                                      .previousElementSibling.innerText
-                                  )
-                                )
-                              }
-                              className="cursor-pointer hover:text-very-dark-blue transition-all"
+                              onClick={() => handleDeleteItem(item.id)}
+                              className="cursor-pointer hover:text-red-500 transition-all"
+                              title="Remove item"
                             >
                               <ion-icon name="trash-outline"></ion-icon>
                             </i>
@@ -474,11 +710,10 @@ const Checkout = () => {
                         </div>
                         <div className="price flex justify-between">
                           <span className="">
-                            ${item.product.price} x {item.quantity}
+                            Rs {item.product.price} x {item.quantity}
                           </span>
                           <span className="font-medium text-very-dark-blue">
-                            {" "}
-                            ${item.itemTotal.toFixed(2)}
+                            Rs {item.itemTotal.toFixed(2)}
                           </span>
                         </div>
                       </div>
@@ -489,49 +724,31 @@ const Checkout = () => {
                   <div className="flex items-center justify-between">
                     <dt className="text-sm">Subtotal</dt>
                     <dd className="text-sm font-medium text-very-dark-blue">
-                      ${amountTotal.toFixed(2)}
+                      Rs {amountTotal.toFixed(2)}
                     </dd>
                   </div>
                   <div className="flex items-center justify-between">
                     <dt className="text-sm">Shipping</dt>
                     <dd className="text-sm font-medium text-very-dark-blue">
-                      $5.00
-                    </dd>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <dt className="text-sm">Taxes</dt>
-                    <dd className="text-sm font-medium text-very-dark-blue">
-                      $5.52
+                      {amountTotal >= 2000 ? (
+                        <span className="text-green-600">Free</span>
+                      ) : (
+                        "Rs 200.00"
+                      )}
                     </dd>
                   </div>
                   <div className="flex items-center justify-between border-t border-gray-200 pt-6 font-bold">
                     <dt className="">Total</dt>
-                    <dd className="">${(amountTotal + 5 + 5.52).toFixed(2)}</dd>
+                    <dd className="">Rs {(amountTotal + (amountTotal >= 2000 ? 0 : 200)).toFixed(2)}</dd>
                   </div>
                 </dl>
-              </div>
-              <div className="mt-8 text-grayish-blue">
-                <h3 className="text-orange font-kumbh-sans font-bold">
-                  SIDE NOTE<sup className="text-xs">*</sup>{" "}
-                </h3>
-                <h3 className="text-dark-grayish-blue">Test Card Details</h3>
-                <p className="">
-                  When testing interactively, use a card number, such as 4242
-                  4242 4242 4242. Enter the card number in the Dashboard or in
-                  any payment form.
-                </p>
-                <ul className="list-disc pl-5">
-                  <li className="mb-2">
-                    Use a valid future date, such as 12/34.
-                  </li>
-                  <li className="mb-2">
-                    Use any three-digit CVC (four digits for American Express
-                    cards).
-                  </li>
-                  <li className="mb-2">
-                    Use any value you like for other form fields.
-                  </li>
-                </ul>
+                {amountTotal < 2000 && (
+                  <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <p className="text-sm text-blue-800">
+                      <strong>Free Shipping:</strong> Get free shipping on orders over Rs 2,000!
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           </div>

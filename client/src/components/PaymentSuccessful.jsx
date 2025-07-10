@@ -5,7 +5,7 @@ import { emptyCart } from "../redux/reducers/cartSlice";
 import { createOrder, getUserOrder } from "../redux/reducers/orderSlice";
 
 const PaymentSuccessful = () => {
-  document.title = "Congratulations on your payment";
+  document.title = "Order Successful";
   const { userInfo, userToken } = useSelector((state) => state.auth);
   const { userCartItems, cartItems, amountTotal } = useSelector(
     (state) => state.cart
@@ -58,7 +58,7 @@ const PaymentSuccessful = () => {
           </span>
         </span>
         <h3 className="text-xl leading-6 font-bold text-gray-900 mt-12">
-          Payment Successful!
+          Order Placed Successfully!
         </h3>
         {userInfo ? (
           <>
@@ -67,14 +67,13 @@ const PaymentSuccessful = () => {
                 {loading ? (
                   <>
                     <p className="text-grayish-blue">
-                      Please hold while order is being created...
+                      Please hold while your order is being created...
                     </p>
                   </>
                 ) : (
                   <div className="mt-8">
                     <p className="text-grayish-blue mb-8">
-                      Congratulation on your order. Check your orders in your
-                      profile.
+                      Congratulations! Your order has been placed and will be delivered to your address. You will pay in cash upon delivery.
                     </p>
                     <Link to="/user-profile/orders">
                       <button className="w-full max-w-xs m-auto bg-orange border border-orange rounded-md py-3 px-4 text-base font-medium text-white shadow-[inset_0_0_0_0_#ffede0] hover:shadow-[inset_0_-4rem_0_0_#ffede1] hover:text-orange transition-all duration-300">
@@ -93,8 +92,7 @@ const PaymentSuccessful = () => {
         ) : (
           <>
             <p className="text-grayish-blue my-8">
-              Congratulation on your order. Be sure to check your emails for
-              order updates.
+              Congratulations! Your order has been placed and will be delivered to your address. You will pay in cash upon delivery. Be sure to check your emails for order updates.
             </p>
           </>
         )}
