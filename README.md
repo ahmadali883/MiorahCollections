@@ -101,6 +101,26 @@ Before running this project, make sure you have the following installed:
    - Frontend: http://localhost:3000
    - Backend API: http://localhost:5000
 
+## 🧪 Testing
+
+The application includes several test scripts to verify functionality:
+
+```bash
+# Test email functionality
+npm run test:email
+
+# Test email image handling
+npm run test:email-images
+
+# Test authentication flow
+npm run test:auth-flow
+```
+
+### Authentication Flow
+- **Unregistered users** can browse all public pages without login prompts
+- **Protected routes** (user profile, checkout, admin) require authentication
+- **Cart functionality** works for both registered and unregistered users
+
 ## 📁 Project Structure
 
 ```
@@ -125,10 +145,11 @@ Before running this project, make sure you have the following installed:
 
 - JWT-based authentication
 - Password encryption
-- Protected routes
+- Protected routes with selective enforcement
 - Input validation
 - XSS protection
 - CORS enabled
+- Public browsing for unregistered users
 
 ## 🛍️ Shopping Features
 

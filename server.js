@@ -29,7 +29,6 @@ app.use("/api/categories", require("./routes/category"));
 app.use("/api/cart", require("./routes/cart"));
 app.use("/api/orders", require("./routes/order"));
 app.use("/api/address", require("./routes/address"));
-app.use("", require("./routes/stripe"));
 
 // Serve Ionicons locally
 app.use('/ionicons', express.static(path.join(__dirname, 'node_modules/ionicons/dist')));

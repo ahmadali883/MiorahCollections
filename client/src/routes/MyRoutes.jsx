@@ -20,7 +20,6 @@ import MyOrders from "../pages/User/Profile/MyOrders";
 import MyAddress from "../pages/User/Profile/MyAddress";
 import Notifications from "../pages/User/Profile/Notifications";
 import Password from "../pages/User/Profile/Password";
-import PaymentSuccessful from "../components/PaymentSuccessful";
 import Dashboard from "../pages/Admin/Dashboard";
 
 const MyRoutes = () => {
@@ -51,7 +50,6 @@ const MyRoutes = () => {
           <Route path="settings" element={<Settings />} />
         </Route>
         <Route path="/checkout" element={ (userInfo? userCartItems.length <1 : cartItems.length<1)  ? <Navigate to="/products" replace={true}  /> : <Checkout />} />
-        <Route path="/payment" element={<PaymentSuccessful />} />
         <Route path="/admin/dashboard" element={<Dashboard />} />
       </Routes>
     </Layout>

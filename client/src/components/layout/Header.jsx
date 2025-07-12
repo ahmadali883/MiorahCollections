@@ -31,7 +31,9 @@ const Header = () => {
   }, [cartItems, userCartItems]);
 
   useEffect(() => {
-    if (!userInfo) {
+    // Only fetch user details if we have a token but no user info
+    const userToken = localStorage.getItem('userToken');
+    if (userToken && !userInfo) {
       dispatch(getUserDetails());
     }
     // eslint-disable-next-line

@@ -57,6 +57,24 @@ export const createOrder = createAsyncThunk('order/createOrder', async (orderDat
 }
 )
 
+export const createGuestOrder = createAsyncThunk('order/createGuestOrder', async (orderData, { rejectWithValue }) => {
+  try {
+    const config = {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    }
+    
+    // For guest orders, just create the order without checking for duplicates
+    let res = await axios.post('/api/orders/guest', orderData, config)
+    return res.data
+
+  } catch (err) {
+    return rejectWithValue(err.response.data)
+  }
+}
+)
+
 
 const orderSlice = createSlice({
   name: "order",
@@ -97,6 +115,23 @@ const orderSlice = createSlice({
       state.success = true
     },
     [createOrder.rejected]: (state, { payload }) => {
+      state.loading = false
+      state.error = true
+      state.errorMsg = payload.msg ? payload.msg : payload
+      state.success = false
+    },
+    [createGuestOrder.pending]: (state) => {
+      state.loading = true
+      state.error = false
+      state.success = false
+    },
+    [createGuestOrder.fulfilled]: (state, { payload }) => {
+      state.loading = false
+      state.errorMsg = ''
+      state.success = true
+      // For guest orders, we don't update the orders array since they can't view order history
+    },
+    [createGuestOrder.rejected]: (state, { payload }) => {
       state.loading = false
       state.error = true
       state.errorMsg = payload.msg ? payload.msg : payload

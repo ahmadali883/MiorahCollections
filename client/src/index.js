@@ -12,13 +12,35 @@ axios.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401 || error.response?.status === 403) {
-      // Token is invalid or expired
-      localStorage.removeItem('userToken');
-      localStorage.removeItem('userInfo');
+      // Only redirect to login if user is trying to access protected routes
+      const currentPath = window.location.pathname;
       
-      // If we're not already on the login page, redirect
-      if (window.location.pathname !== '/login' && window.location.pathname !== '/register') {
-        window.location.href = '/login';
+      // Define protected routes that require authentication
+      const protectedRoutes = [
+        '/user-profile',
+        '/checkout',
+        '/admin',
+        '/orders',
+        '/addresses',
+        '/notifications',
+        '/password',
+        '/settings'
+      ];
+      
+      // Check if current path is a protected route
+      const isProtectedRoute = protectedRoutes.some(route => 
+        currentPath.startsWith(route)
+      );
+      
+      // Only clear storage and redirect if accessing protected routes
+      if (isProtectedRoute) {
+        localStorage.removeItem('userToken');
+        localStorage.removeItem('userInfo');
+        
+        // If we're not already on the login page, redirect
+        if (currentPath !== '/login' && currentPath !== '/register') {
+          window.location.href = '/login';
+        }
       }
     }
     return Promise.reject(error);
