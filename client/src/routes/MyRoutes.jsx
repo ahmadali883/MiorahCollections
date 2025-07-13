@@ -21,6 +21,7 @@ import MyAddress from "../pages/User/Profile/MyAddress";
 import Notifications from "../pages/User/Profile/Notifications";
 import Password from "../pages/User/Profile/Password";
 import Dashboard from "../pages/Admin/Dashboard";
+import CheckboxTest from "../pages/CheckboxTest";
 
 const MyRoutes = () => {
   const user = false;
@@ -39,6 +40,7 @@ const MyRoutes = () => {
         <Route path="/products/" element={<Products />} />
         <Route path="/products/:id" element={<ProductPage />} />
         <Route path="/contact" element={<Contact />} />
+        <Route path="/checkbox-test" element={<CheckboxTest />} />
         <Route path="/login" element={user ? <Navigate to="/" replace={true}  /> : <Login />} />
         <Route path="/register" element={user ? <Navigate to="/" replace={true}  /> : <Register />} />
         <Route path="/user-profile" element={ <UserProfile/>}>
