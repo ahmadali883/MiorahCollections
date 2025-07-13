@@ -34,13 +34,18 @@ const Footer = () => {
         <nav className="as flex flex-col sm:flex-row -mt-3 mb-10 md:mb-0 sm:px-10">
           <ul className="px-4">
             <li className="my-3 hover:text-orange w-fit sm:w-full mx-auto sm:mx-0">
-              <a href="/collections" className="">
-                Collections
+              <a href="/" className="">
+                Home
               </a>
             </li>
             <li className="my-3 hover:text-orange w-fit sm:w-full mx-auto sm:mx-0">
-              <a href="/about-us" className="">
-                About us
+              <a href="/categories" className="">
+                Categories
+              </a>
+            </li>
+            <li className="my-3 hover:text-orange w-fit sm:w-full mx-auto sm:mx-0">
+              <a href="/about" className="">
+                About
               </a>
             </li>
             <li className="my-3 hover:text-orange w-fit sm:w-full mx-auto sm:mx-0">

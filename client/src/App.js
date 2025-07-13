@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import MyRoutes from "./routes/MyRoutes";
 import { loadUserFromStorage } from "./redux/reducers/authSlice";
 import SessionManager from "./components/SessionManager";
+import ErrorBoundary from "./components/ErrorBoundary";
 
 function App() {
   const dispatch = useDispatch();
@@ -29,12 +30,14 @@ function App() {
   }, [userToken]);
 
   return (
-    <BrowserRouter>
-      <div className="App font-kumbh-sans w-full min-h-screen relative overflow-hidden">
-        <SessionManager />
-        <MyRoutes />
-      </div>
-    </BrowserRouter>
+    <ErrorBoundary>
+      <BrowserRouter>
+        <div className="App font-kumbh-sans w-full min-h-screen relative overflow-hidden">
+          <SessionManager />
+          <MyRoutes />
+        </div>
+      </BrowserRouter>
+    </ErrorBoundary>
   );
 }
 

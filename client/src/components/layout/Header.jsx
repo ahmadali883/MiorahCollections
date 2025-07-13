@@ -100,10 +100,10 @@ const Header = () => {
             <ul className="hidden lg:flex lg:items-center lg:space-x-8">
               <li>
                 <NavLink
-                  to="/collections"
+                  to="/"
                   className="text-dark-grayish-blue hover:text-very-dark-blue border-b-4 border-transparent hover:border-orange py-8 duration-200"
                 >
-                  Collections
+                  Home
                 </NavLink>
               </li>
               <li>
@@ -129,10 +129,17 @@ const Header = () => {
                   {showCategories && (
                     <div className="absolute top-full left-0 mt-2 w-48 bg-white rounded-md shadow-lg z-40 border">
                       <div className="py-1">
+                        <NavLink
+                          to="/categories"
+                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 font-medium border-b"
+                          onClick={hideCategories}
+                        >
+                          All Categories
+                        </NavLink>
                         {categories.map((category, index) => (
                           <NavLink
                             key={index}
-                            to={`/categories/${category._id}`}
+                            to={`/collections?category=${category._id}`}
                             className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                             onClick={hideCategories}
                           >
@@ -251,11 +258,11 @@ const Header = () => {
             <ul className="space-y-6">
               <li>
                 <NavLink
-                  to="/collections"
+                  to="/"
                   className="text-very-dark-blue font-bold text-lg"
                   onClick={displayMenu}
                 >
-                  Collections
+                  Home
                 </NavLink>
               </li>
               <li>
@@ -265,6 +272,15 @@ const Header = () => {
                   onClick={displayMenu}
                 >
                   Products
+                </NavLink>
+              </li>
+              <li>
+                <NavLink
+                  to="/categories"
+                  className="text-very-dark-blue font-bold text-lg"
+                  onClick={displayMenu}
+                >
+                  Categories
                 </NavLink>
               </li>
               <li>

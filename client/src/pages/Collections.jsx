@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { getProductsByCollection } from '../redux/reducers/productSlice';
 import ProductItem from '../components/home/ProductItem';
@@ -14,6 +14,7 @@ const Collections = () => {
   document.title = "Jewellery Collections"
   const query = useQuery();
   const categoryId = query.get('category');
+  const navigate = useNavigate();
   const dispatch = useDispatch();
   const { collection, loading, error, errMsg, categories } = useSelector(state => state.product);
 
@@ -33,19 +34,45 @@ const Collections = () => {
   useEffect(() => {
     if (categoryId) {
       dispatch(getProductsByCollection(categoryId));
+    } else {
+      // If no category is selected, redirect to categories page
+      navigate('/categories');
     }
-  }, [categoryId, dispatch]);
+  }, [categoryId, dispatch, navigate]);
 
   return (
     <section className='h-auto lg:pt-2 min-h-[80vh]'>
       <div className='max-w-xl sm:max-w-4xl lg:max-w-7xl relative px-5 pt-20 pb-12 items-center mx-auto lg:mx-20 xl:mx-28 2xl:mx-40 3xl:mx-auto lg:pb-2 lg:px-1 xl:px-3 2xl:px-1'>
+        {/* Breadcrumb Navigation */}
+        {categoryId && (
+          <nav className="relative z-[2] mb-4">
+            <ol className="flex items-center space-x-2 text-sm">
+              <li>
+                <Link to="/" className="text-gray-600 hover:text-orange transition-colors">
+                  Home
+                </Link>
+              </li>
+              <li className="text-gray-400">/</li>
+              <li>
+                <Link to="/categories" className="text-gray-600 hover:text-orange transition-colors">
+                  Categories
+                </Link>
+              </li>
+              <li className="text-gray-400">/</li>
+              <li className="text-orange font-medium">
+                {categoryName}
+              </li>
+            </ol>
+          </nav>
+        )}
+        
         <h2 className='product capitalize text-white font-bold text-center relative z-[1] lg:text-left text-3xl sm:text-4xl sm:leading-none pb-16 px-8'>
           {categoryName ? `${categoryName} Collection` : 'Our Collections'}
         </h2>
         <div className='absolute top-0 left-0 -z-0 bg-dark-grayish-blue w-full h-48 lg:rounded-md overflow-hidden'>
           <img
             src={CollectionsHeader}
-            alt='sneakers on a shelf'
+            alt='jewelry collections header'
             className='opacity-10 h-full w-full object-cover'
           />
         </div>

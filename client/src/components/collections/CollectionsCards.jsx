@@ -44,7 +44,7 @@ const CollectionsCards = () => {
       {displayCategories.map((category) => (
         <Link 
           key={category._id}
-          to={`/collections/?category=${category._id}`} 
+          to={`/collections?category=${category._id}`} 
           onClick={() => dispatch(getProductsByCollection(category._id))}
         >
           <div
