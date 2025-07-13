@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import { deleteItem, deleteUserCartItem, cartDisplay, emptyCart } from "../redux/reducers/cartSlice";
 import { createOrder, createGuestOrder } from "../redux/reducers/orderSlice";
+import { createAddress, getUserAddress } from "../redux/reducers/addressSlice";
 import { useForm } from "react-hook-form";
 import Loading from "../components/Loading";
 
@@ -82,27 +83,46 @@ const Checkout = () => {
     }
   };
 
-  const handleSaveAddress = (data) => {
-    // Here you would dispatch an action to save the address
-    // For now, we'll just simulate saving
-    console.log("Saving address:", data);
-    
-    // Reset form and hide it
-    resetAddressForm();
-    setShowAddressForm(false);
-    setAddressFormData({
-      firstname: "",
-      lastname: "",
-      streetAddress: "",
-      city: "",
-      state: "",
-      country: "",
-      phone: "",
-      zipcode: ""
-    });
-    
-    // In a real app, you would dispatch an action like:
-    // dispatch(saveUserAddress({ userId: userInfo._id, address: data }));
+  const handleSaveAddress = async (data) => {
+    if (!userInfo) {
+      console.error("User must be logged in to save addresses");
+      return;
+    }
+
+    try {
+      // Prepare address data with user ID
+      const addressData = {
+        ...data,
+        user: userInfo._id
+      };
+
+      console.log("Saving address:", addressData);
+      
+      // Dispatch the createAddress action
+      await dispatch(createAddress(addressData)).unwrap();
+      
+      // Refresh the user's addresses after saving
+      await dispatch(getUserAddress({ user: userInfo._id })).unwrap();
+      
+      // Reset form and hide it
+      resetAddressForm();
+      setShowAddressForm(false);
+      setAddressFormData({
+        firstname: "",
+        lastname: "",
+        streetAddress: "",
+        city: "",
+        state: "",
+        country: "",
+        phone: "",
+        zipcode: ""
+      });
+      
+      console.log("Address saved successfully!");
+    } catch (error) {
+      console.error("Failed to save address:", error);
+      // You could show an error message to the user here
+    }
   };
 
   const handleAddressSelection = (address) => {

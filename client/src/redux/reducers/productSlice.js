@@ -24,6 +24,134 @@ export const getCategories = createAsyncThunk(
     return res.data
   })
 
+// Inventory Management Actions
+export const getAdminProducts = createAsyncThunk('product/getAdminProducts', async (params, { rejectWithValue }) => {
+  try {
+    const userToken = localStorage.getItem('userToken')
+      ? localStorage.getItem('userToken')
+      : null
+
+    const config = {
+      headers: {
+        'Content-Type': 'application/json',
+        'x-auth-token': userToken,
+      },
+    }
+
+    const queryParams = new URLSearchParams(params).toString()
+    let { data } = await axios.get(`/products/admin/all?${queryParams}`, config)
+    return data
+
+  } catch (err) {
+    return rejectWithValue(err.response.data)
+  }
+})
+
+export const updateProduct = createAsyncThunk('product/updateProduct', async ({ productId, productData }, { rejectWithValue }) => {
+  try {
+    const userToken = localStorage.getItem('userToken')
+      ? localStorage.getItem('userToken')
+      : null
+
+    const config = {
+      headers: {
+        'Content-Type': 'application/json',
+        'x-auth-token': userToken,
+      },
+    }
+
+    let { data } = await axios.put(`/products/${productId}`, productData, config)
+    return data
+
+  } catch (err) {
+    return rejectWithValue(err.response.data)
+  }
+})
+
+export const deleteProduct = createAsyncThunk('product/deleteProduct', async (productId, { rejectWithValue }) => {
+  try {
+    const userToken = localStorage.getItem('userToken')
+      ? localStorage.getItem('userToken')
+      : null
+
+    const config = {
+      headers: {
+        'Content-Type': 'application/json',
+        'x-auth-token': userToken,
+      },
+    }
+
+    let { data } = await axios.delete(`/products/${productId}`, config)
+    return { productId, message: data.msg }
+
+  } catch (err) {
+    return rejectWithValue(err.response.data)
+  }
+})
+
+export const getLowStockProducts = createAsyncThunk('product/getLowStockProducts', async (threshold = 10, { rejectWithValue }) => {
+  try {
+    const userToken = localStorage.getItem('userToken')
+      ? localStorage.getItem('userToken')
+      : null
+
+    const config = {
+      headers: {
+        'Content-Type': 'application/json',
+        'x-auth-token': userToken,
+      },
+    }
+
+    let { data } = await axios.get(`/products/inventory/low-stock?threshold=${threshold}`, config)
+    return data
+
+  } catch (err) {
+    return rejectWithValue(err.response.data)
+  }
+})
+
+export const getInventoryStats = createAsyncThunk('product/getInventoryStats', async (_, { rejectWithValue }) => {
+  try {
+    const userToken = localStorage.getItem('userToken')
+      ? localStorage.getItem('userToken')
+      : null
+
+    const config = {
+      headers: {
+        'Content-Type': 'application/json',
+        'x-auth-token': userToken,
+      },
+    }
+
+    let { data } = await axios.get('/products/inventory/stats', config)
+    return data
+
+  } catch (err) {
+    return rejectWithValue(err.response.data)
+  }
+})
+
+export const bulkUpdateProducts = createAsyncThunk('product/bulkUpdateProducts', async ({ productIds, updates, operation }, { rejectWithValue }) => {
+  try {
+    const userToken = localStorage.getItem('userToken')
+      ? localStorage.getItem('userToken')
+      : null
+
+    const config = {
+      headers: {
+        'Content-Type': 'application/json',
+        'x-auth-token': userToken,
+      },
+    }
+
+    let { data } = await axios.put('/products/inventory/bulk-update', { productIds, updates, operation }, config)
+    return data
+
+  } catch (err) {
+    return rejectWithValue(err.response.data)
+  }
+})
+
 const productSlice = createSlice({
   name: 'product',
   initialState: {
@@ -44,12 +172,42 @@ const productSlice = createSlice({
     categories: [],
     brands: [],
     collection: [],
-    lastRefresh: null // Add this to track last refresh time
+    lastRefresh: null, // Add this to track last refresh time
+    // Inventory management state
+    adminProducts: [],
+    lowStockProducts: [],
+    inventoryStats: null,
+    productsPagination: null,
+    inventoryLoading: false,
+    inventoryError: false,
+    inventoryErrorMsg: '',
+    bulkUpdateLoading: false,
+    selectedProducts: [],
   },
   reducers: {
     getProducts: (state, action) => {
       state.products = action.payload.products
       state.loading = false
+    },
+    // Inventory management reducers
+    toggleProductSelection: (state, action) => {
+      const productId = action.payload;
+      const index = state.selectedProducts.indexOf(productId);
+      if (index > -1) {
+        state.selectedProducts.splice(index, 1);
+      } else {
+        state.selectedProducts.push(productId);
+      }
+    },
+    selectAllProducts: (state) => {
+      state.selectedProducts = state.adminProducts.map(product => product._id);
+    },
+    clearProductSelection: (state) => {
+      state.selectedProducts = [];
+    },
+    clearInventoryError: (state) => {
+      state.inventoryError = false;
+      state.inventoryErrorMsg = '';
     },
     setError: (state, action) => {
       state.loading = false
@@ -203,6 +361,107 @@ const productSlice = createSlice({
       state.loading = false
       state.error = true
       state.errMsg = action.error.message
+    },
+    // Inventory Management Extra Reducers
+    [getAdminProducts.pending]: (state) => {
+      state.inventoryLoading = true
+      state.inventoryError = false
+    },
+    [getAdminProducts.fulfilled]: (state, { payload }) => {
+      state.inventoryLoading = false
+      state.adminProducts = payload.products
+      state.productsPagination = payload.pagination
+      state.inventoryErrorMsg = ''
+    },
+    [getAdminProducts.rejected]: (state, { payload }) => {
+      state.inventoryLoading = false
+      state.inventoryError = true
+      state.inventoryErrorMsg = payload.msg || payload
+    },
+    [updateProduct.pending]: (state) => {
+      state.inventoryLoading = true
+      state.inventoryError = false
+    },
+    [updateProduct.fulfilled]: (state, { payload }) => {
+      state.inventoryLoading = false
+      // Update the product in the admin products list
+      const productIndex = state.adminProducts.findIndex(product => product._id === payload._id)
+      if (productIndex !== -1) {
+        state.adminProducts[productIndex] = payload
+      }
+      // Also update in regular products if it exists
+      const regularProductIndex = state.products.findIndex(product => product._id === payload._id)
+      if (regularProductIndex !== -1) {
+        state.products[regularProductIndex] = payload
+      }
+      state.inventoryErrorMsg = ''
+    },
+    [updateProduct.rejected]: (state, { payload }) => {
+      state.inventoryLoading = false
+      state.inventoryError = true
+      state.inventoryErrorMsg = payload.msg || payload
+    },
+    [deleteProduct.pending]: (state) => {
+      state.inventoryLoading = true
+      state.inventoryError = false
+    },
+    [deleteProduct.fulfilled]: (state, { payload }) => {
+      state.inventoryLoading = false
+      // Remove from admin products
+      state.adminProducts = state.adminProducts.filter(product => product._id !== payload.productId)
+      // Update in regular products (mark as inactive)
+      const regularProductIndex = state.products.findIndex(product => product._id === payload.productId)
+      if (regularProductIndex !== -1) {
+        state.products[regularProductIndex].is_active = false
+      }
+      state.inventoryErrorMsg = ''
+    },
+    [deleteProduct.rejected]: (state, { payload }) => {
+      state.inventoryLoading = false
+      state.inventoryError = true
+      state.inventoryErrorMsg = payload.msg || payload
+    },
+    [getLowStockProducts.pending]: (state) => {
+      state.inventoryLoading = true
+      state.inventoryError = false
+    },
+    [getLowStockProducts.fulfilled]: (state, { payload }) => {
+      state.inventoryLoading = false
+      state.lowStockProducts = payload
+      state.inventoryErrorMsg = ''
+    },
+    [getLowStockProducts.rejected]: (state, { payload }) => {
+      state.inventoryLoading = false
+      state.inventoryError = true
+      state.inventoryErrorMsg = payload.msg || payload
+    },
+    [getInventoryStats.pending]: (state) => {
+      state.inventoryLoading = true
+      state.inventoryError = false
+    },
+    [getInventoryStats.fulfilled]: (state, { payload }) => {
+      state.inventoryLoading = false
+      state.inventoryStats = payload
+      state.inventoryErrorMsg = ''
+    },
+    [getInventoryStats.rejected]: (state, { payload }) => {
+      state.inventoryLoading = false
+      state.inventoryError = true
+      state.inventoryErrorMsg = payload.msg || payload
+    },
+    [bulkUpdateProducts.pending]: (state) => {
+      state.bulkUpdateLoading = true
+      state.inventoryError = false
+    },
+    [bulkUpdateProducts.fulfilled]: (state, { payload }) => {
+      state.bulkUpdateLoading = false
+      state.inventoryErrorMsg = ''
+      // Optionally refresh the admin products list after bulk update
+    },
+    [bulkUpdateProducts.rejected]: (state, { payload }) => {
+      state.bulkUpdateLoading = false
+      state.inventoryError = true
+      state.inventoryErrorMsg = payload.msg || payload
     }
   }
 })
@@ -210,7 +469,8 @@ const productSlice = createSlice({
 export const {
   getProducts, setError, getFilteredProducts, changeImage,
   prevPreview, nextPreview, prevSlide, nextSlide,
-  getProductItem, quantityCount, selectFilters, selectSort, getFilters
+  getProductItem, quantityCount, selectFilters, selectSort, getFilters,
+  toggleProductSelection, selectAllProducts, clearProductSelection, clearInventoryError
 } = productSlice.actions;
 
 export default productSlice.reducer;

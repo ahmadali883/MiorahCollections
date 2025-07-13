@@ -19,12 +19,18 @@ const MyOrders = () => {
       <hr className="border-b border-grayish-blue mt-3 mb-8" />
 
       <div className="">
-        {userInfo && orders.length > 0 ? (
+        {userInfo && orders && orders.length > 0 ? (
           <>
             <h3 className="sr-only">
               Order placed on <time dateTime="2021-07-06">Jul 6, 2021</time>
             </h3>
-            {orders.map((order, index) => (
+            {orders.map((order, index) => {
+              // Skip orders without required data
+              if (!order || !order._id) {
+                return null;
+              }
+              
+              return (
               <>
                 <div
                   key={order._id}
@@ -69,16 +75,16 @@ const MyOrders = () => {
                       <dd className="mt-1 font-medium text-very-dark-blue text-end lg:text-start text-xs">
                         <address className="not-italic text-very-dark-blue w-full">
                           <p className="fullname mb-2">
-                            {order.address.firstname} {order.address.lastname}
+                            {order.address?.firstname || 'N/A'} {order.address?.lastname || ''}
                           </p>
                           <p className="location text-dark-grayish-blue">
-                            {order.address.streetAddress}
+                            {order.address?.streetAddress || order.address?.address || 'N/A'}
                           </p>
                           <p className="city-state mb-2 text-dark-grayish-blue">
-                            {order.address.city}, {order.address.state}
+                            {order.address?.city || 'N/A'}, {order.address?.state || 'N/A'}
                           </p>
                           <p className="telephone text-dark-grayish-blue mb-3">
-                            {order.address.phone}
+                            {order.address?.phone || 'N/A'}
                           </p>
                         </address>
                       </dd>
@@ -87,44 +93,84 @@ const MyOrders = () => {
                 </div>
 
                 <div className="orders flex flex-col lg:-mx-3 mt-7 mb-16">
-                  {order.products.map((item, index) => (
-                    <div className="">
-                      <Link
-                        to={`/products/${item[0].product._id}`}
-                        className="cursor-pointer hover:opacity-70 transition"
-                      >
-                        <div>
-                          <div
-                            key={index}
-                            className="w-full h-full rounded-md relative my-2 lg:mx-3 lg:my-3 flex "
+                  {order.products && order.products.length > 0 ? (
+                    order.products.map((item, index) => {
+                      // Handle different product data structures
+                      let product, quantity, itemTotal, productId;
+                      
+                      // Check if item is nested array structure
+                      if (Array.isArray(item) && item.length > 0 && item[0]) {
+                        product = item[0].product || item[0];
+                        quantity = item[0].quantity || 1;
+                        itemTotal = item[0].itemTotal || item[0].price || 0;
+                        productId = product._id || product.id;
+                      } else {
+                        // Direct object structure
+                        product = item.product || item;
+                        quantity = item.quantity || 1;
+                        itemTotal = item.itemTotal || item.price || 0;
+                        productId = product._id || product.id || item._id;
+                      }
+
+                      // Skip if no valid product data
+                      if (!product) {
+                        return null;
+                      }
+
+                      return (
+                        <div key={index} className="">
+                          <Link
+                            to={`/products/${productId}`}
+                            className="cursor-pointer hover:opacity-70 transition"
                           >
-                            <div className="flex flex-row">
-                              <img
-                                className="w-22 h-22 hover:opacity-80 object-cover"
-                                src={item[0].product.img[0]}
-                                alt="order-img"
-                              />
-                              <div className="flex flex-col">
-                                <div className="flex flex-row text-sm lg:text-base">
-                                  <p className="ml-4 mr-2">
-                                    {item[0].product.title}
-                                  </p>
-                                  X<p className="ml-2">{item[0].quantity}</p>
-                                </div>
-                                <div className="amount ml-4 mt-2 text-dark-grayish-blue">
-                                  ${item[0].itemTotal}
+                            <div>
+                              <div className="w-full h-full rounded-md relative my-2 lg:mx-3 lg:my-3 flex">
+                                <div className="flex flex-row">
+                                  {product.img && product.img.length > 0 ? (
+                                    <img
+                                      className="w-22 h-22 hover:opacity-80 object-cover"
+                                      src={product.img[0]}
+                                      alt="order-img"
+                                      onError={(e) => {
+                                        e.target.style.display = 'none';
+                                        e.target.nextSibling.style.display = 'flex';
+                                      }}
+                                    />
+                                  ) : null}
+                                  <div 
+                                    className="w-22 h-22 bg-gray-200 flex items-center justify-center text-gray-400 text-xs"
+                                    style={{ display: product.img && product.img.length > 0 ? 'none' : 'flex' }}
+                                  >
+                                    No Image
+                                  </div>
+                                  <div className="flex flex-col">
+                                    <div className="flex flex-row text-sm lg:text-base">
+                                      <p className="ml-4 mr-2">
+                                        {product.title || product.name || 'Product Name'}
+                                      </p>
+                                      X<p className="ml-2">{quantity}</p>
+                                    </div>
+                                    <div className="amount ml-4 mt-2 text-dark-grayish-blue">
+                                      ${typeof itemTotal === 'number' ? itemTotal.toFixed(2) : '0.00'}
+                                    </div>
+                                  </div>
                                 </div>
                               </div>
+                              <hr className="text-gray-200" />
                             </div>
-                          </div>
-                          <hr className="text-gray-200" />
+                          </Link>
                         </div>
-                      </Link>
+                      );
+                    })
+                  ) : (
+                    <div className="text-center py-4 text-gray-500">
+                      No products found in this order
                     </div>
-                  ))}
+                  )}
                 </div>
               </>
-            ))}
+              );
+            })}
           </>
         ) : (
           <>

@@ -3,12 +3,14 @@ import { useSelector, useDispatch } from 'react-redux';
 import { Navigate } from 'react-router-dom';
 import CategoryForm from '../../components/admin/CategoryForm';
 import ProductUploadForm from '../../components/admin/ProductUploadForm';
+import OrderManager from '../../components/admin/OrderManager';
+import InventoryManager from '../../components/admin/InventoryManager';
 import { loadUserFromStorage } from '../../redux/reducers/authSlice';
 import { getAllProducts, getCategories } from '../../redux/reducers/productSlice';
 import AdminManager from '../../components/admin/AdminManager';
 
 const Dashboard = () => {
-  const [activeTab, setActiveTab] = useState('products');
+  const [activeTab, setActiveTab] = useState('orders');
   const { userInfo, userToken, loading } = useSelector(state => state.auth);
   const { loading: productLoading } = useSelector(state => state.product);
   const dispatch = useDispatch();
@@ -126,13 +128,33 @@ const Dashboard = () => {
           <div className="flex border-b border-gray-200">
             <button
               className={`px-6 py-3 text-sm font-medium ${
+                activeTab === 'orders' 
+                  ? 'border-b-2 border-orange text-orange' 
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+              onClick={() => setActiveTab('orders')}
+            >
+              Orders
+            </button>
+            <button
+              className={`px-6 py-3 text-sm font-medium ${
+                activeTab === 'inventory' 
+                  ? 'border-b-2 border-orange text-orange' 
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+              onClick={() => setActiveTab('inventory')}
+            >
+              Inventory
+            </button>
+            <button
+              className={`px-6 py-3 text-sm font-medium ${
                 activeTab === 'products' 
                   ? 'border-b-2 border-orange text-orange' 
                   : 'text-gray-500 hover:text-gray-700'
               }`}
               onClick={() => setActiveTab('products')}
             >
-              Products
+              Add Products
             </button>
             <button
               className={`px-6 py-3 text-sm font-medium ${
@@ -159,6 +181,14 @@ const Dashboard = () => {
         
         {/* Tab content */}
         <div className="mt-6">
+          {activeTab === 'orders' && (
+            <OrderManager />
+          )}
+          
+          {activeTab === 'inventory' && (
+            <InventoryManager />
+          )}
+          
           {activeTab === 'products' && (
             <ProductUploadForm />
           )}
