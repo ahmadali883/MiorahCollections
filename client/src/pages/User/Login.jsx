@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form";
 import { loginUser, removeError } from "../../redux/reducers/authSlice";
 import { useNavigate, useLocation } from "react-router-dom";
 import ErrorDisplay from "../../components/ErrorDisplay";
+import axios from "../../utils/axiosConfig";
 
 const Login = () => {
   document.title = "Login Page";
@@ -18,6 +19,12 @@ const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [successMessage, setSuccessMessage] = useState(null);
+  const [emailVerificationError, setEmailVerificationError] = useState(null);
+  const [resendState, setResendState] = useState({
+    loading: false,
+    success: false,
+    error: null
+  });
 
   // Handle success message from registration
   useEffect(() => {
@@ -39,25 +46,66 @@ const Login = () => {
   const submitForm = async (data) => {
     // Clear any existing errors
     dispatch(removeError());
+    setEmailVerificationError(null);
     
     try {
       await dispatch(loginUser(data)).unwrap();
       // Success is handled by the redirect in useEffect
     } catch (err) {
-      // Error is handled by the Redux state
+      // Handle email verification error specially
+      if (err.requiresVerification) {
+        setEmailVerificationError({
+          message: err.msg,
+          email: err.email
+        });
+      }
+      // Other errors are handled by the Redux state
       console.error('Login failed:', err);
     }
   };
 
   const removeErrMsg = () => {
     dispatch(removeError());
+    setEmailVerificationError(null);
   };
 
   const handleRetry = () => {
     removeErrMsg();
-    // Optionally clear form and refocus on email field
     const emailField = document.getElementById('email');
     if (emailField) emailField.focus();
+  };
+
+  const resendVerification = async () => {
+    if (!emailVerificationError?.email) return;
+
+    try {
+      setResendState(prev => ({ ...prev, loading: true, error: null }));
+      
+      const response = await axios.post('/auth/resend-verification', {
+        email: emailVerificationError.email
+      });
+      
+      setResendState({
+        loading: false,
+        success: true,
+        error: null
+      });
+      
+      // Show success message
+      setSuccessMessage("Verification email sent! Please check your email.");
+      setEmailVerificationError(null);
+      
+    } catch (error) {
+      console.error('Resend verification error:', error);
+      
+      const errorMessage = error.response?.data?.msg || 'Failed to resend verification email. Please try again.';
+      
+      setResendState({
+        loading: false,
+        success: false,
+        error: errorMessage
+      });
+    }
   };
 
   return (
@@ -80,7 +128,7 @@ const Login = () => {
             onChange={removeErrMsg}
           >
             <fieldset disabled={loading} className="w-full contents">
-            {error && (
+            {error && !emailVerificationError && (
               <div className="absolute top-28 left-0 right-0 z-10">
                 <ErrorDisplay 
                   error={{ msg: errMsg, type: 'LOGIN_ERROR' }}
@@ -89,6 +137,48 @@ const Login = () => {
                   size="small"
                   className="mx-0"
                 />
+              </div>
+            )}
+            {emailVerificationError && (
+              <div className="absolute top-28 left-0 right-0 z-10">
+                <div className="bg-amber-50 border border-amber-200 rounded-md p-4 text-sm">
+                  <div className="flex items-start">
+                    <svg className="w-5 h-5 text-amber-500 mr-2 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L3.314 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                    </svg>
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-amber-800 mb-1">Email Verification Required</h3>
+                      <p className="text-amber-700 mb-3">{emailVerificationError.message}</p>
+                      <div className="flex flex-col sm:flex-row gap-2">
+                        <button
+                          type="button"
+                          onClick={resendVerification}
+                          disabled={resendState.loading}
+                          className="px-3 py-1 bg-amber-500 text-white rounded hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                        >
+                          {resendState.loading ? 'Sending...' : 'Resend Verification Email'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setEmailVerificationError(null)}
+                          className="px-3 py-1 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 text-sm"
+                        >
+                          Dismiss
+                        </button>
+                      </div>
+                      {resendState.success && (
+                        <div className="mt-2 text-green-700 text-sm">
+                          ✓ Verification email sent successfully!
+                        </div>
+                      )}
+                      {resendState.error && (
+                        <div className="mt-2 text-red-700 text-sm">
+                          {resendState.error}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
             {successMessage && (
@@ -109,7 +199,7 @@ const Login = () => {
                 name="email"
                 type="text"
                 className={`peer h-10 w-full border-b-2 text-very-dark-blue placeholder-transparent focus:outline-none ${
-                  error ? 'border-red-500 focus:border-red-500' : 'border-grayish-blue focus:border-orange'
+                  error || emailVerificationError ? 'border-red-500 focus:border-red-500' : 'border-grayish-blue focus:border-orange'
                 }`}
                 placeholder="username or email"
                 {...register("email")}
@@ -131,7 +221,7 @@ const Login = () => {
                 name="password"
                 type="password"
                 className={`peer h-10 w-full border-b-2 text-very-dark-blue placeholder-transparent focus:outline-none ${
-                  error ? 'border-red-500 focus:border-red-500' : 'border-grayish-blue focus:border-orange'
+                  error || emailVerificationError ? 'border-red-500 focus:border-red-500' : 'border-grayish-blue focus:border-orange'
                 }`}
                 placeholder="Password"
                 {...register("password")}

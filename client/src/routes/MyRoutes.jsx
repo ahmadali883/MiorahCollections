@@ -1,63 +1,59 @@
-import React from "react";
-import { Route, Routes, Navigate } from "react-router-dom";
-import Home from "../pages/Home/Home";
-import About from "../pages/About";
-import Collections from "../pages/Collections";
-import Categories from "../pages/Categories";
-import Contact from "../pages/Contact";
-import Login from "../pages/User/Login";
-import Register from "../pages/User/Register";
-import ForgotPassword from "../pages/User/ForgotPassword";
-import Layout from "../components/layout/Layout";
-import Products from "../pages/Products";
-import ProductPage from "../pages/ProductPage";
-import NotFound from "../pages/NotFound";
-import Checkout from "../pages/Checkout";
-import { useSelector } from "react-redux";
-import UserProfile from "../pages/User/UserProfile";
-import Settings from "../pages/User/Profile/Settings";
-import MyAccount from "../pages/User/Profile/MyAccount";
-import MyOrders from "../pages/User/Profile/MyOrders";
-import MyAddress from "../pages/User/Profile/MyAddress";
-import Notifications from "../pages/User/Profile/Notifications";
-import Password from "../pages/User/Profile/Password";
-import Dashboard from "../pages/Admin/Dashboard";
-import CheckboxTest from "../pages/CheckboxTest";
+import React from 'react'
+import { Routes, Route } from 'react-router-dom'
+import Home from '../pages/Home/Home'
+import Products from '../pages/Products'
+import ProductPage from '../pages/ProductPage'
+import Collections from '../pages/Collections'
+import Categories from '../pages/Categories'
+import About from '../pages/About'
+import Contact from '../pages/Contact'
+import Login from '../pages/User/Login'
+import Register from '../pages/User/Register'
+import ResetPassword from '../pages/User/ResetPassword'
+import EmailVerification from '../pages/User/EmailVerification'
+import UserProfile from '../pages/User/UserProfile'
+import Layout from '../components/layout/Layout'
+import { useSelector } from 'react-redux'
+import Dashboard from '../pages/Admin/Dashboard'
+import NotFound from '../pages/NotFound'
+import Checkout from '../pages/Checkout'
+import CheckboxTest from '../pages/CheckboxTest'
 
 const MyRoutes = () => {
-  const user = false;
-  const { cartItems, userCartItems } = useSelector((state) => state.cart);
-  const { userInfo } = useSelector((state) => state.auth);
+  const { user } = useSelector(state => state.auth)
 
   return (
     <Layout>
       <Routes>
-        <Route path='*' element={<NotFound />} />
         <Route path="/" element={<Home />} />
-        <Route path="/about" element={<About />} />
-        <Route path="/categories" element={<Categories />} />
-        <Route path="/collections" element={<Collections />} />
-        <Route path="/collections/:collection" element={<Collections />} />
-        <Route path="/products/" element={<Products />} />
+        <Route path="/products" element={<Products />} />
         <Route path="/products/:id" element={<ProductPage />} />
+        <Route path="/collections" element={<Collections />} />
+        <Route path="/collections/:category" element={<Categories />} />
+        <Route path="/about" element={<About />} />
         <Route path="/contact" element={<Contact />} />
-        <Route path="/checkbox-test" element={<CheckboxTest />} />
-        <Route path="/login" element={user ? <Navigate to="/" replace={true}  /> : <Login />} />
-        <Route path="/register" element={user ? <Navigate to="/" replace={true}  /> : <Register />} />
-        <Route path="/forgot-password" element={user ? <Navigate to="/" replace={true}  /> : <ForgotPassword />} />
-        <Route path="/user-profile" element={ <UserProfile/>}>
-          <Route path="" element={<MyAccount />} />
-          <Route path="orders" element={<MyOrders />} />
-          <Route path="addresses" element={<MyAddress />} />
-          <Route path="notifications" element={<Notifications />} />
-          <Route path="password" element={<Password />} />
-          <Route path="settings" element={<Settings />} />
-        </Route>
-        <Route path="/checkout" element={ (userInfo? userCartItems.length <1 : cartItems.length<1)  ? <Navigate to="/products" replace={true}  /> : <Checkout />} />
-        <Route path="/admin/dashboard" element={<Dashboard />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/reset-password/:token" element={<ResetPassword />} />
+        <Route path="/verify-email/:token" element={<EmailVerification />} />
+        <Route path="/checkout" element={<Checkout />} />
+        <Route path="/test" element={<CheckboxTest />} />
+        
+        {/* Authenticated routes */}
+        {user && (
+          <>
+            <Route path="/profile/*" element={<UserProfile />} />
+            {user.isAdmin && (
+              <Route path="/dashboard" element={<Dashboard />} />
+            )}
+          </>
+        )}
+        
+        {/* 404 route */}
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </Layout>
-  );
-};
+  )
+}
 
-export default MyRoutes;
+export default MyRoutes

@@ -350,6 +350,7 @@ const authSlice = createSlice({
     userToken,
     success: false,
     errMsg: '',
+    userEmail: '', // Store email for verification purposes
     userErrorMsg: '',
     userUpdateError: false,
     userUpdateErrorMsg: '',
@@ -396,6 +397,14 @@ const authSlice = createSlice({
     [registerUser.fulfilled]: (state, { payload }) => {
       state.loading = false
       state.success = true
+      // Handle new email verification response
+      if (payload.emailSent) {
+        state.errMsg = payload.message || "Registration successful! Please check your email to verify your account."
+        state.userEmail = payload.email
+      } else {
+        state.errMsg = payload.message || "Registration successful!"
+      }
+      // Do not store token or user info - user needs to verify email first
     },
     [registerUser.rejected]: (state, { payload }) => {
       state.loading = false

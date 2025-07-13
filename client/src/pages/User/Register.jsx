@@ -1,10 +1,11 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import AuthBg from "../../assets/user/auth-bg.jpg";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { useDispatch, useSelector } from "react-redux";
 import { registerUser, removeError } from "../../redux/reducers/authSlice";
 import ErrorDisplay from "../../components/ErrorDisplay";
+import useAvailabilityCheck from "../../hooks/useAvailabilityCheck";
 
 const Register = () => {
   document.title = "Registration Page";
@@ -18,23 +19,40 @@ const Register = () => {
     handleSubmit,
     formState: { errors },
     getValues,
+    watch,
   } = useForm({
     mode: "onChange",
   });
 
   const navigate = useNavigate();
+  const { availability, checkUsername, checkEmail, resetAllAvailability } = useAvailabilityCheck();
+  const [localError, setLocalError] = useState(null);
+  
+  // Watch form values for real-time validation
+  const watchedUsername = watch("username");
+  const watchedEmail = watch("email");
+  // Real-time username availability check
   useEffect(() => {
-    // redirect user to login page if registration was successful
+    if (watchedUsername && watchedUsername.length >= 3 && !errors.username) {
+      checkUsername(watchedUsername);
+    }
+  }, [watchedUsername, checkUsername, errors.username]);
+
+  // Real-time email availability check
+  useEffect(() => {
+    if (watchedEmail && watchedEmail.includes('@') && !errors.email) {
+      checkEmail(watchedEmail);
+    }
+  }, [watchedEmail, checkEmail, errors.email]);
+
+  useEffect(() => {
+    // Handle registration success - no longer redirect to login immediately
+    // User needs to verify email first
     if (success) {
-      // Add a slight delay to show success feedback
-      setTimeout(() => {
-        navigate("/login", { 
-          state: { 
-            message: "Registration successful! Please login with your credentials.",
-            type: "success" 
-          } 
-        });
-      }, 1500);
+      // Clear availability checks
+      resetAllAvailability();
+      // Do not redirect - let user know about email verification
+      // The success message will be shown from the Redux state
     }
     // redirect authenticated user to profile screen
     if (userInfo) {
@@ -46,6 +64,26 @@ const Register = () => {
   const submitForm = async (data) => {
     // Clear any existing errors
     dispatch(removeError());
+    
+    // Clear local errors
+    setLocalError(null);
+    
+    // Check if username/email are available before submitting
+    if (availability.username.available === false) {
+      setLocalError({
+        msg: availability.username.message,
+        type: 'VALIDATION_ERROR'
+      });
+      return;
+    }
+    
+    if (availability.email.available === false) {
+      setLocalError({
+        msg: availability.email.message,
+        type: 'VALIDATION_ERROR'
+      });
+      return;
+    }
     
     try {
       await dispatch(registerUser(data)).unwrap();
@@ -62,6 +100,8 @@ const Register = () => {
 
   const handleRetry = () => {
     removeErrMsg();
+    setLocalError(null);
+    resetAllAvailability();
     // Focus on first field with error or first field
     const firstField = document.getElementById('firstname');
     if (firstField) firstField.focus();
@@ -87,12 +127,12 @@ const Register = () => {
             onChange={removeErrMsg}
           >
             <fieldset disabled={loading || success} className="w-full contents">
-            {error && (
+            {(error || localError) && (
               <div className="absolute top-28 left-0 right-0 z-10">
                 <ErrorDisplay 
-                  error={{ msg: errMsg, type: 'REGISTRATION_ERROR' }}
+                  error={localError || { msg: errMsg, type: 'REGISTRATION_ERROR' }}
                   onRetry={handleRetry}
-                  onDismiss={removeErrMsg}
+                  onDismiss={localError ? () => setLocalError(null) : removeErrMsg}
                   size="small"
                   className="mx-0"
                 />
@@ -105,7 +145,7 @@ const Register = () => {
                     <svg className="w-4 h-4 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
                     </svg>
-                    <span className="text-green-800">Registration successful! Redirecting to login...</span>
+                    <span className="text-green-800">{errMsg || "Registration successful!"}</span>
                   </div>
                 </div>
               </div>
@@ -229,6 +269,28 @@ const Register = () => {
                   {errors.username.message}
                 </p>
               )}
+              {!errors.username && availability.username.checking && (
+                <p className="text-sm text-blue-600 italic flex items-center">
+                  <svg className="animate-spin -ml-1 mr-2 h-3 w-3 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Checking availability...
+                </p>
+              )}
+              {!errors.username && availability.username.available === false && (
+                <p className="text-sm text-red-600 italic">
+                  {availability.username.message}
+                </p>
+              )}
+              {!errors.username && availability.username.available === true && watchedUsername && watchedUsername.length >= 3 && (
+                <p className="text-sm text-green-600 italic flex items-center">
+                  <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/>
+                  </svg>
+                  Username available!
+                </p>
+              )}
               <label
                 htmlFor="username"
                 className="absolute left-0 -top-3.5 text-dark-grayish-blue text-sm transition-all peer-placeholder-shown:text-base peer-placeholder-shown:text-grayish-blue peer-placeholder-shown:top-2 peer-focus:-top-3.5 peer-focus:text-dark-grayish-blue peer-focus:text-sm"
@@ -261,6 +323,28 @@ const Register = () => {
               {errors.email && (
                 <p id="email-error" className="text-sm text-[red] italic" role="alert">
                   {errors.email.message}
+                </p>
+              )}
+              {!errors.email && availability.email.checking && (
+                <p className="text-sm text-blue-600 italic flex items-center">
+                  <svg className="animate-spin -ml-1 mr-2 h-3 w-3 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Checking availability...
+                </p>
+              )}
+              {!errors.email && availability.email.available === false && (
+                <p className="text-sm text-red-600 italic">
+                  {availability.email.message}
+                </p>
+              )}
+              {!errors.email && availability.email.available === true && watchedEmail && watchedEmail.includes('@') && (
+                <p className="text-sm text-green-600 italic flex items-center">
+                  <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/>
+                  </svg>
+                  Email available!
                 </p>
               )}
               <label
@@ -354,9 +438,9 @@ const Register = () => {
               type="submit"
               className={
                 "w-full h-12 max-w-lg lg:max-w-none bg-orange rounded-md mt-3 lg:mt-5 mb-2 text-white flex items-center justify-center lg:w-2/5 shadow-[inset_0_-1px_0_0_#ffede1] hover:shadow-[inset_0_-4rem_0_0_#ffede1] hover:text-orange border transition-all duration-300 " +
-                (loading || success ? "cursor-not-allowed opacity-70" : "cursor-pointer hover:opacity-90")
+                (loading || success || availability.username.checking || availability.email.checking || availability.username.available === false || availability.email.available === false ? "cursor-not-allowed opacity-70" : "cursor-pointer hover:opacity-90")
               }
-              disabled={loading || success}
+              disabled={loading || success || availability.username.checking || availability.email.checking || availability.username.available === false || availability.email.available === false}
             >
               {loading ? (
                 <div className="flex items-center">
@@ -375,6 +459,18 @@ const Register = () => {
                   </svg>
                   SUCCESS
                 </div>
+              ) : (availability.username.checking || availability.email.checking) ? (
+                <div className="flex items-center">
+                  <div
+                    className="spinner-border animate-spin inline-block w-4 h-4 border rounded-full mr-2"
+                    role="status"
+                  >
+                    <span className="sr-only">Loading...</span>
+                  </div>
+                  CHECKING AVAILABILITY...
+                </div>
+              ) : (availability.username.available === false || availability.email.available === false) ? (
+                <>PLEASE FIX ERRORS</>
               ) : (
                 <>CREATE ACCOUNT</>
               )}

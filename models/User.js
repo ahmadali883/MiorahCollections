@@ -9,7 +9,12 @@ const UserSchema = new mongoose.Schema(
     password: { type: String, required: true },
     isAdmin : {type: Boolean, default: false},
     phone: String,
-    gender: String
+    gender: String,
+    isEmailVerified: { type: Boolean, default: false },
+    emailVerificationToken: String,
+    emailVerificationExpires: Date,
+    resetPasswordToken: String,
+    resetPasswordExpires: Date
   },
   { timestamps: true }
 );

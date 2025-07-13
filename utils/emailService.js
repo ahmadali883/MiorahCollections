@@ -305,8 +305,384 @@ const sendEmail = async (to, subject, htmlContent, textContent = '') => {
   }
 };
 
+// Send password reset email
+const sendPasswordResetEmail = async (email, firstName, resetUrl, resetToken) => {
+  const subject = 'Reset Your Password - Miorah Collections';
+  const html = generatePasswordResetHTML(firstName, resetUrl, resetToken);
+  const text = generatePasswordResetText(firstName, resetUrl);
+  
+  return await sendEmail(email, subject, html, text);
+};
+
+// Generate HTML template for password reset
+const generatePasswordResetHTML = (firstName, resetUrl, resetToken) => {
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Reset Your Password</title>
+        <style>
+            body { font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f7f7f7; }
+            .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; }
+            .header { background: linear-gradient(135deg, #ff7e5f 0%, #feb47b 100%); padding: 40px 30px; text-align: center; }
+            .header h1 { color: white; margin: 0; font-size: 28px; font-weight: bold; }
+            .content { padding: 40px 30px; }
+            .reset-button { background-color: #ff7e5f; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold; margin: 20px 0; }
+            .reset-button:hover { background-color: #ff6b47; }
+            .footer { background-color: #f0f0f0; padding: 20px 30px; text-align: center; font-size: 12px; color: #666; }
+            .warning { background-color: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 5px; margin: 20px 0; }
+            .token-box { background-color: #f8f9fa; border: 1px solid #dee2e6; padding: 15px; border-radius: 5px; margin: 20px 0; font-family: monospace; word-break: break-all; }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>🔐 Reset Your Password</h1>
+            </div>
+            
+            <div class="content">
+                <h2>Hello ${firstName},</h2>
+                
+                <p>We received a request to reset your password for your Miorah Collections account. If you didn't make this request, you can safely ignore this email.</p>
+                
+                <div class="warning">
+                    <strong>⚠️ Security Notice:</strong> This reset link will expire in 1 hour for your security.
+                </div>
+                
+                <p>To reset your password, click the button below:</p>
+                
+                <div style="text-align: center; margin: 30px 0;">
+                    <a href="${resetUrl}" class="reset-button">Reset My Password</a>
+                </div>
+                
+                <p>If the button doesn't work, you can copy and paste this link into your browser:</p>
+                <div class="token-box">
+                    ${resetUrl}
+                </div>
+                
+                <p><strong>Alternative method:</strong> If you're having trouble with the link, you can also use this reset token directly on our password reset page:</p>
+                <div class="token-box">
+                    Reset Token: ${resetToken}
+                </div>
+                
+                <h3>🛡️ Security Tips:</h3>
+                <ul>
+                    <li>Choose a strong password with at least 8 characters</li>
+                    <li>Include a mix of letters, numbers, and symbols</li>
+                    <li>Don't reuse passwords from other accounts</li>
+                    <li>Never share your password with anyone</li>
+                </ul>
+                
+                <p>If you continue to have problems, please contact our support team.</p>
+                
+                <p>Best regards,<br>
+                <strong>The Miorah Collections Team</strong></p>
+            </div>
+            
+            <div class="footer">
+                <p>This email was sent because a password reset was requested for your account.</p>
+                <p>If you didn't request this, please contact us immediately.</p>
+                <p>&copy; ${new Date().getFullYear()} Miorah Collections. All rights reserved.</p>
+            </div>
+        </div>
+    </body>
+    </html>
+  `;
+};
+
+// Generate plain text version for password reset
+const generatePasswordResetText = (firstName, resetUrl) => {
+  return `
+Hi ${firstName},
+
+We received a request to reset your password for your Miorah Collections account.
+
+To reset your password, click the link below or copy and paste it into your browser:
+${resetUrl}
+
+This link will expire in 1 hour for security reasons.
+
+If you didn't request this password reset, please ignore this email. Your password will remain unchanged.
+
+For security reasons, please don't share this link with anyone.
+
+Best regards,
+The Miorah Collections Team
+
+---
+If you're having trouble clicking the link, copy and paste the URL below into your web browser:
+${resetUrl}
+  `.trim();
+};
+
+// Email verification functions
+const sendEmailVerificationEmail = async (email, firstName, verificationUrl, verificationToken) => {
+  try {
+    const subject = 'Verify Your Email Address - Miorah Collections';
+    const htmlContent = generateEmailVerificationHTML(firstName, verificationUrl, verificationToken);
+    const textContent = generateEmailVerificationText(firstName, verificationUrl);
+    
+    await sendEmail(email, subject, htmlContent, textContent);
+    console.log(`Email verification sent to ${email}`);
+  } catch (error) {
+    console.error('Error sending email verification:', error);
+    throw error;
+  }
+};
+
+const generateEmailVerificationHTML = (firstName, verificationUrl, verificationToken) => {
+  return `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Verify Your Email - Miorah Collections</title>
+      <style>
+        body {
+          font-family: 'Arial', sans-serif;
+          line-height: 1.6;
+          color: #333;
+          max-width: 600px;
+          margin: 0 auto;
+          padding: 20px;
+          background-color: #f4f4f4;
+        }
+        .container {
+          background-color: white;
+          padding: 30px;
+          border-radius: 10px;
+          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+          text-align: center;
+          margin-bottom: 30px;
+          border-bottom: 2px solid #3b82f6;
+          padding-bottom: 20px;
+        }
+        .logo {
+          font-size: 28px;
+          font-weight: bold;
+          color: #1f2937;
+          margin-bottom: 10px;
+        }
+        .subtitle {
+          color: #6b7280;
+          font-size: 16px;
+        }
+        .content {
+          margin-bottom: 30px;
+        }
+        .greeting {
+          font-size: 18px;
+          color: #1f2937;
+          margin-bottom: 20px;
+        }
+        .message {
+          font-size: 16px;
+          line-height: 1.8;
+          color: #374151;
+          margin-bottom: 25px;
+        }
+        .verify-button {
+          text-align: center;
+          margin: 30px 0;
+        }
+        .verify-button a {
+          display: inline-block;
+          background-color: #3b82f6;
+          color: white !important;
+          padding: 15px 30px;
+          text-decoration: none;
+          border-radius: 8px;
+          font-weight: 600;
+          font-size: 16px;
+          transition: background-color 0.3s;
+        }
+        .verify-button a:hover {
+          background-color: #2563eb;
+        }
+        .security-info {
+          background-color: #f0f9ff;
+          border: 1px solid #bae6fd;
+          border-radius: 8px;
+          padding: 20px;
+          margin: 25px 0;
+        }
+        .security-info h3 {
+          color: #0369a1;
+          margin-bottom: 15px;
+          font-size: 16px;
+        }
+        .security-info ul {
+          margin: 10px 0;
+          padding-left: 20px;
+        }
+        .security-info li {
+          margin: 8px 0;
+          color: #0c4a6e;
+          font-size: 14px;
+        }
+        .footer {
+          text-align: center;
+          margin-top: 30px;
+          padding-top: 20px;
+          border-top: 1px solid #e5e7eb;
+          color: #6b7280;
+          font-size: 14px;
+        }
+        .token-info {
+          background-color: #f9fafb;
+          border: 1px solid #d1d5db;
+          border-radius: 6px;
+          padding: 15px;
+          margin: 20px 0;
+          font-family: monospace;
+          font-size: 12px;
+          color: #6b7280;
+          text-align: center;
+        }
+        .warning {
+          background-color: #fef3c7;
+          border: 1px solid #f59e0b;
+          border-radius: 6px;
+          padding: 15px;
+          margin: 20px 0;
+          color: #92400e;
+          font-size: 14px;
+        }
+        .warning strong {
+          color: #78350f;
+        }
+        
+        /* Mobile responsive */
+        @media (max-width: 600px) {
+          body {
+            padding: 10px;
+          }
+          .container {
+            padding: 20px;
+          }
+          .verify-button a {
+            padding: 12px 25px;
+            font-size: 14px;
+          }
+        }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <div class="logo">💎 Miorah Collections</div>
+          <div class="subtitle">Exquisite Jewelry & Accessories</div>
+        </div>
+        
+        <div class="content">
+          <div class="greeting">Hello ${firstName}!</div>
+          
+          <div class="message">
+            Welcome to Miorah Collections! We're excited to have you join our community of jewelry enthusiasts.
+          </div>
+          
+          <div class="message">
+            To complete your registration and start exploring our exquisite collection, please verify your email address by clicking the button below:
+          </div>
+          
+          <div class="verify-button">
+            <a href="${verificationUrl}">Verify My Email Address</a>
+          </div>
+          
+          <div class="security-info">
+            <h3>🔒 Security Information</h3>
+            <ul>
+              <li>This verification link will expire in <strong>24 hours</strong></li>
+              <li>If you didn't create an account, please ignore this email</li>
+              <li>Never share this verification link with anyone</li>
+              <li>Once verified, you'll be able to access all features of your account</li>
+            </ul>
+          </div>
+          
+          <div class="warning">
+            <strong>⚠️ Important:</strong> You must verify your email address to log in to your account. If you don't verify within 24 hours, you'll need to register again.
+          </div>
+          
+          <div class="message">
+            If you're having trouble clicking the button, copy and paste the following link into your browser:
+          </div>
+          
+          <div class="token-info">
+            ${verificationUrl}
+          </div>
+          
+          <div class="message">
+            Once your email is verified, you'll be able to:
+            <ul>
+              <li>Browse our complete jewelry collection</li>
+              <li>Save items to your wishlist</li>
+              <li>Track your orders and delivery status</li>
+              <li>Receive exclusive offers and updates</li>
+            </ul>
+          </div>
+        </div>
+        
+        <div class="footer">
+          <p>
+            Best regards,<br>
+            The Miorah Collections Team
+          </p>
+          <p>
+            <strong>Verification Token:</strong> ${verificationToken.substring(0, 8)}...
+          </p>
+          <p>
+            This is an automated email. Please do not reply to this message.
+          </p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+};
+
+const generateEmailVerificationText = (firstName, verificationUrl) => {
+  return `
+Hi ${firstName},
+
+Welcome to Miorah Collections! We're excited to have you join our community of jewelry enthusiasts.
+
+To complete your registration and start exploring our exquisite collection, please verify your email address by clicking the link below or copying and pasting it into your browser:
+
+${verificationUrl}
+
+IMPORTANT SECURITY INFORMATION:
+- This verification link will expire in 24 hours
+- If you didn't create an account, please ignore this email
+- Never share this verification link with anyone
+- Once verified, you'll be able to access all features of your account
+
+WARNING: You must verify your email address to log in to your account. If you don't verify within 24 hours, you'll need to register again.
+
+Once your email is verified, you'll be able to:
+- Browse our complete jewelry collection
+- Save items to your wishlist
+- Track your orders and delivery status
+- Receive exclusive offers and updates
+
+Best regards,
+The Miorah Collections Team
+
+---
+If you're having trouble clicking the link, copy and paste the URL below into your web browser:
+${verificationUrl}
+  `.trim();
+};
+
 module.exports = {
   sendOrderConfirmationEmail,
-  sendEmail,
-  generateOrderConfirmationHTML
+  sendPasswordResetEmail,
+  sendEmailVerificationEmail,
+  generateOrderConfirmationHTML,
+  generatePasswordResetHTML,
+  generatePasswordResetText
 }; 

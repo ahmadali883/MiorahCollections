@@ -106,6 +106,11 @@ router.post(
         return res.status(400).json({ msg: "Username already taken" });
       }
 
+      // Generate email verification token
+      const crypto = require('crypto');
+      const verificationToken = crypto.randomBytes(32).toString('hex');
+      const verificationTokenExpiry = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
+
       // CREATE A NEW USER
       const user = new User({
         firstname,
@@ -113,6 +118,9 @@ router.post(
         username,
         email,
         password,
+        isEmailVerified: false,
+        emailVerificationToken: verificationToken,
+        emailVerificationExpires: verificationTokenExpiry
       });
 
       let salt = await bcrypt.genSalt(10);
@@ -120,25 +128,28 @@ router.post(
 
       await user.save();
 
-      const payload = {
-        user: {
-          id: user.id,
-          // only an admin can take CRUD operations to collections & delete any users
-          // if not an admin, the user can only make CRUD operations to his/her account
-          isAdmin: user.isAdmin,
-        },
-      };
-      jwt.sign(
-        payload,
-        process.env.JWTSECRET,
-        {
-          expiresIn: '24h',
-        },
-        (error, token) => {
-          if (error) throw error;
-          res.json({ token });
-        }
-      );
+      // Send email verification
+      try {
+        const emailService = require('../utils/emailService');
+        const verificationUrl = `${process.env.CLIENT_URL || 'http://localhost:3000'}/verify-email/${verificationToken}`;
+        
+        await emailService.sendEmailVerificationEmail(user.email, user.firstname, verificationUrl, verificationToken);
+        
+        res.status(201).json({ 
+          message: "Registration successful! Please check your email to verify your account before logging in.",
+          emailSent: true,
+          email: user.email
+        });
+      } catch (emailError) {
+        console.error('Failed to send verification email:', emailError);
+        
+        // Delete the user if email fails to send
+        await User.findByIdAndDelete(user._id);
+        
+        res.status(500).json({ 
+          msg: "Registration failed. Unable to send verification email. Please try again." 
+        });
+      }
     } catch (err) {
       console.error(err.message);
       res.status(500).send("Server Error");
