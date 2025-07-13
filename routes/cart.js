@@ -60,7 +60,13 @@ router.post(
         return res.status(400).json({ msg: "Cart already exists for this user" });
       }
 
-      let cart = new Cart(req.body);
+      // Validate and clean cart products
+      const validatedProducts = validateCartProducts(req.body.products || []);
+
+      let cart = new Cart({
+        ...req.body,
+        products: validatedProducts
+      });
       let newCart = await cart.save();
 
       res.status(200).json(newCart);
@@ -71,27 +77,55 @@ router.post(
   }
 );
 
+// Helper function to validate and clean cart products
+const validateCartProducts = (products) => {
+  if (!Array.isArray(products)) return [];
+  
+  return products
+    .filter(item => {
+      return (
+        item &&
+        typeof item === 'object' &&
+        item.id &&
+        item.product &&
+        typeof item.quantity === 'number' &&
+        item.quantity > 0 &&
+        typeof item.itemTotal === 'number' &&
+        item.itemTotal >= 0
+      );
+    })
+    .map(item => ({
+      id: item.id,
+      product: item.product,
+      quantity: Math.min(100, Math.max(1, Math.floor(item.quantity))), // Cap at 100, minimum 1
+      itemTotal: parseFloat(item.itemTotal.toFixed(2))
+    }));
+};
+
 // @ route    PUT api/cart
 // @desc      Update cart
 // @ access   Private
 router.put("/:id", verifyTokenAndAuthorization , async (req, res) => {
   try {
+    // Validate and clean cart products
+    const validatedProducts = validateCartProducts(req.body.products || []);
+    
     const cart = await Cart.findOne({ userId: req.params.id });
     
     if (!cart) {
       // Create new cart if it doesn't exist
       const newCart = new Cart({
         userId: req.params.id,
-        products: req.body.products || []
+        products: validatedProducts
       });
       const savedCart = await newCart.save();
       return res.status(200).json(savedCart);
     }
     
-    // Update existing cart
+    // Update existing cart with validated products
     const updatedCart = await Cart.findOneAndUpdate(
       { userId: req.params.id },
-      { $set: req.body },
+      { $set: { ...req.body, products: validatedProducts } },
       { new: true, upsert: false }
     );
     res.status(200).json(updatedCart);

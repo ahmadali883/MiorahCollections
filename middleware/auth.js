@@ -2,6 +2,18 @@ const jwt = require("jsonwebtoken");
 const dotenv = require("dotenv");
 const path = require('path');
 dotenv.config({ path: path.join(__dirname, '../config/config.env') });
+
+// Import token blacklist from auth routes
+let tokenBlacklist = new Set();
+try {
+  const authRoutes = require('../routes/auth');
+  if (authRoutes.tokenBlacklist) {
+    tokenBlacklist = authRoutes.tokenBlacklist;
+  }
+} catch (error) {
+  console.warn('Could not import token blacklist:', error.message);
+}
+
 const verifyToken = (req, res, next) => {
   // Get token from header
   const token = req.header("x-auth-token");
@@ -10,6 +22,11 @@ const verifyToken = (req, res, next) => {
   if (!token) {
     // 401 unauthorized access
     return res.status(401).json({ msg: "No Token, authorization denied!" });
+  }
+
+  // Check if token is blacklisted
+  if (tokenBlacklist.has(token)) {
+    return res.status(401).json({ msg: "Token has been invalidated, please login again" });
   }
 
   try {
@@ -43,6 +60,15 @@ const verifyTokenAndAuthorization = (req, res, next) => {
   });
 };
 
+const verifyTokenAndAdmin = (req, res, next) => {
+  verifyToken(req, res, () => {
+    if (req.user.isAdmin) {
+      next();
+    } else {
+      res.status(403).send("You're not allowed to do that!");
+    }
+  });
+};
 
 // TO CHECK IF THE USER IS THE ONE MAKING THE REQUEST
 const verifyTokenAndUser= (req, res, next) => {
@@ -55,13 +81,9 @@ const verifyTokenAndUser= (req, res, next) => {
   });
 };
 
-const verifyTokenAndAdmin = (req, res, next) => {
-  verifyToken(req, res, () => {
-    if (req.user.isAdmin) {
-      next();
-    } else {
-      res.status(403).send("You're not allowed to do that!");
-    }
-  });
+module.exports = {
+  verifyToken,
+  verifyTokenAndAuthorization,
+  verifyTokenAndAdmin,
+  verifyTokenAndUser,
 };
-module.exports = { verifyToken, verifyTokenAndAuthorization, verifyTokenAndAdmin, verifyTokenAndUser };

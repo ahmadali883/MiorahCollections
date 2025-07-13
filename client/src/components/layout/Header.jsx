@@ -9,8 +9,8 @@ import {
   createUserCart,
   cartDisplay,
   setTotals,
+  cleanupCart,
 } from "../../redux/reducers/cartSlice";
-import { getUserDetails } from "../../redux/reducers/authSlice";
 import { getUserAddress } from "../../redux/reducers/addressSlice";
 import { getUserOrder } from "../../redux/reducers/orderSlice";
 import { getCategories } from "../../redux/reducers/productSlice";
@@ -19,231 +19,280 @@ const Header = () => {
   const dispatch = useDispatch();
   const showCart = useSelector((state) => state.cart.showCart);
   const total = useSelector((state) => state.cart.total);
-  const { cartItems, userCartItems } = useSelector((state) => state.cart);
-  const { userInfo } = useSelector((state) => state.auth);
+  const { cartItems, userCartItems, cartMerged } = useSelector((state) => state.cart);
+  const { userInfo, refreshing } = useSelector((state) => state.auth);
   const { categories } = useSelector((state) => state.product);
   const [showCategories, setShowCategories] = useState(false);
+  const cartInitialized = useRef(false);
 
+  // Calculate totals when cart items change
   useEffect(() => {
     dispatch(setTotals());
+  }, [cartItems, userCartItems, dispatch]);
+
+  // One-time initialization on component mount
+  useEffect(() => {
     dispatch(getCategories());
-    // eslint-disable-next-line
-  }, [cartItems, userCartItems]);
+    dispatch(cleanupCart());
+  }, [dispatch]);
+
+  // Remove the duplicate getUserDetails call since App.js handles user loading
+  // This prevents race conditions
 
   useEffect(() => {
-    // Only fetch user details if we have a token but no user info
-    const userToken = localStorage.getItem('userToken');
-    if (userToken && !userInfo) {
-      dispatch(getUserDetails());
+    if (userInfo && !refreshing && !cartInitialized.current) {
+      // For logged-in users, fetch the current cart from database and merge with guest cart
+      const guestCartItems = cartItems.length > 0 ? cartItems : [];
+      
+      dispatch(createUserCart({ 
+        products: [], 
+        _id: userInfo._id,
+        guestCartItems: guestCartItems // Pass guest cart for merging
+      }));
+      
+      cartInitialized.current = true;
     }
     // eslint-disable-next-line
-  }, []);
+  }, [userInfo, refreshing]);
 
+  // Reset cart initialization flag when user logs out
   useEffect(() => {
-    if (userInfo) {
-      // For logged-in users, always fetch the current cart from database
-      dispatch(createUserCart({ products: [], _id: userInfo._id }));
+    if (!userInfo) {
+      cartInitialized.current = false;
     }
-    // eslint-disable-next-line
   }, [userInfo]);
 
   useEffect(() => {
     if (userInfo) {
+      // Fetch user-related data
       dispatch(getUserAddress({ user: userInfo._id }));
       dispatch(getUserOrder({ user: userInfo._id }));
     }
     // eslint-disable-next-line
   }, [userInfo]);
 
-  //HAMBURGER MENU
-  let navMenu = useRef(null);
-  let darkScreen = useRef(null);
-  let close = useRef(null);
-  let hamburger = useRef(null);
-
   const displayMenu = () => {
-    navMenu.current.classList.toggle("!translate-x-0");
-    darkScreen.current.classList.toggle("!opacity-60");
-    darkScreen.current.classList.toggle("!z-20");
-    darkScreen.current.classList.toggle("!block");
-    close.current.classList.toggle("!block");
-    hamburger.current.classList.toggle("!hidden");
+    const menu = document.querySelector("#menu");
+    menu.classList.toggle("hidden");
+  };
+
+  const displayCart = () => {
+    dispatch(cartDisplay(!showCart));
+  };
+
+  const hideCategories = () => {
+    setShowCategories(false);
   };
 
   return (
-    <header className="sm:px-3 lg:px-0 mx-auto relative z-10">
-      <div className="wrapper max-w-xl lg:max-w-7xl relative flex h-16 px-5 py-4 items-center justify-between lg:h-28 mx-auto lg:mx-20 xl:mx-28 2xl:mx-40 3xl:mx-auto lg:pb-2 lg:px-1 xl:px-3 2xl:px-1 lg:py-0 lg:border-b border-grayish-blue">
-        <div className="left flex items-center lg:h-inherit">
-          <div
-            onClick={displayMenu}
-            className="menu w-4 lg:hidden z-40 cursor-pointer"
-          >
-            <img ref={hamburger} src={menu} alt="menu-icon" />
-            <div
-              ref={close}
-              className="close hidden text-xl leading-none fixed -mt-3 -ml-1 w-4"
-            >
-              <ion-icon name="close-outline"></ion-icon>
-            </div>
-          </div>
-          <NavLink
-            to="/"
-            className="logo mx-4 -mt-1 lg:m-auto lg:w-[138px] z-50"
-          >
-            <img src={logo} alt="logo" />
-          </NavLink>
-          <nav
-            ref={navMenu}
-            className="menu fixed inset-0 right-1/3 bg-white pt-20 z-30 h-screen px-7 -translate-x-full transition-all ease-in-out duration-500 lg:translate-x-0 lg:relative lg:w-max lg:p-0 lg:h-inherit lg:flex lg:items-center"
-          >
-            <ul className="font-bold lg:font-normal text-center lg:text-left lg:flex lg:items-center text-lg lg:text-base pt-2 lg:p-0 lg:mx-9 lg:text-dark-grayish-blue lg:h-inherit">
-              <li className="relative h-12 lg:h-inherit">
+    <section className="w-full relative">
+      <header className="max-w-screen-2xl mx-auto z-30 px-4 md:px-6 relative">
+        <nav className="flex justify-between items-center relative py-4 md:py-8">
+          <div className="flex items-center space-x-4 md:space-x-16">
+            <button className="lg:hidden" onClick={displayMenu}>
+              <img src={menu} alt="" />
+            </button>
+
+            <NavLink to="/">
+              <img src={logo} alt="" className="w-32 md:w-40" />
+            </NavLink>
+
+            <ul className="hidden lg:flex lg:items-center lg:space-x-8">
+              <li>
                 <NavLink
-                  onClick={displayMenu}
-                  to="/"
-                  className={({ isActive }) =>
-                    "absolute inset-0 mb-5 pt-[2.5px] lg:pt-0 lg:mb-0 lg:mx-4 lg:h-inherit lg:flex lg:items-center cursor-pointer lg:relative lg:before:content-[attr(before)] before:absolute before:-bottom-1 before:left-0 before:h-full before:-z-10 before:lg:z-10 before:lg:h-1 before:bg-orange before:w-0 hover:before:w-full before:transition-all lg:hover:text-very-dark-blue " +
-                    (!isActive
-                      ? ""
-                      : "before:w-full text-white lg:text-very-dark-blue")
-                  }
+                  to="/collections"
+                  className="text-dark-grayish-blue hover:text-very-dark-blue border-b-4 border-transparent hover:border-orange py-8 duration-200"
                 >
-                  Home
+                  Collections
                 </NavLink>
               </li>
-              <li 
-                className="relative h-12 lg:h-inherit"
-                onMouseEnter={() => setShowCategories(true)}
-                onMouseLeave={() => setShowCategories(false)}
-              >
+              <li>
                 <NavLink
-                  to="/categories"
-                  className={({ isActive }) =>
-                    "absolute inset-0 mb-5 pt-[2.5px] lg:pt-0 lg:mb-0 lg:mx-4 lg:h-inherit lg:flex lg:items-center cursor-pointer lg:relative lg:before:content-[attr(before)] before:absolute before:-bottom-1 before:left-0 before:h-full before:-z-10 before:lg:z-10 before:lg:h-1 before:bg-orange before:w-0 hover:before:w-full before:transition-all lg:hover:text-very-dark-blue " +
-                    (!isActive
-                      ? ""
-                      : "before:w-full text-white lg:text-very-dark-blue")
-                  }
-                >
-                  Categories
-                </NavLink>
-                {showCategories && (
-                  <div className="absolute left-0 -mt-1 w-56 bg-white rounded-md shadow-2xl py-2 z-50 border border-gray-100">
-                    {categories.map((category) => (
-                      <NavLink
-                        key={category._id}
-                        to={`/collections/?category=${category._id}`}
-                        className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-orange hover:text-white transition-colors duration-200"
-                        onClick={displayMenu}
-                      >
-                        {category.name}
-                      </NavLink>
-                    ))}
-                  </div>
-                )}
-              </li>
-              <li className="relative h-12 lg:h-inherit">
-                <NavLink
-                  onClick={displayMenu}
                   to="/products"
-                  className={({ isActive }) =>
-                    "absolute inset-0 mb-5 pt-[2.5px] lg:pt-0 lg:mb-0 lg:mx-4 lg:h-inherit lg:flex lg:items-center cursor-pointer lg:relative lg:before:content-[attr(before)] before:absolute before:-bottom-1 before:left-0 before:h-full before:-z-10 before:lg:z-10 before:lg:h-1 before:bg-orange before:w-0 hover:before:w-full before:transition-all lg:hover:text-very-dark-blue " +
-                    (!isActive
-                      ? ""
-                      : "before:w-full text-white lg:text-very-dark-blue")
-                  }
-                  end
+                  className="text-dark-grayish-blue hover:text-very-dark-blue border-b-4 border-transparent hover:border-orange py-8 duration-200"
                 >
-                  All Products
+                  Products
                 </NavLink>
               </li>
-              <li className="relative h-12 lg:h-inherit">
+              <li>
+                <div className="relative">
+                  <button
+                    onClick={() => setShowCategories(!showCategories)}
+                    className="text-dark-grayish-blue hover:text-very-dark-blue border-b-4 border-transparent hover:border-orange py-8 duration-200 flex items-center"
+                  >
+                    Categories
+                    <svg className="w-4 h-4 ml-1" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd"/>
+                    </svg>
+                  </button>
+                  
+                  {showCategories && (
+                    <div className="absolute top-full left-0 mt-2 w-48 bg-white rounded-md shadow-lg z-40 border">
+                      <div className="py-1">
+                        {categories.map((category, index) => (
+                          <NavLink
+                            key={index}
+                            to={`/categories/${category._id}`}
+                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                            onClick={hideCategories}
+                          >
+                            {category.name}
+                          </NavLink>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </li>
+              <li>
                 <NavLink
-                  onClick={displayMenu}
-                  to="/new-arrivals"
-                  className={({ isActive }) =>
-                    "absolute inset-0 mb-5 pt-[2.5px] lg:pt-0 lg:mb-0 lg:mx-4 lg:h-inherit lg:flex lg:items-center cursor-pointer lg:relative lg:before:content-[attr(before)] before:absolute before:-bottom-1 before:left-0 before:h-full before:-z-10 before:lg:z-10 before:lg:h-1 before:bg-orange before:w-0 hover:before:w-full before:transition-all lg:hover:text-very-dark-blue " +
-                    (!isActive
-                      ? ""
-                      : "before:w-full text-white lg:text-very-dark-blue")
-                  }
+                  to="/about"
+                  className="text-dark-grayish-blue hover:text-very-dark-blue border-b-4 border-transparent hover:border-orange py-8 duration-200"
                 >
-                  New Arrivals
+                  About
+                </NavLink>
+              </li>
+              <li>
+                <NavLink
+                  to="/contact"
+                  className="text-dark-grayish-blue hover:text-very-dark-blue border-b-4 border-transparent hover:border-orange py-8 duration-200"
+                >
+                  Contact
                 </NavLink>
               </li>
             </ul>
-            {!userInfo && (
-              <ul className="">
-                <li>
-                  <NavLink to="/login">
-                    <button className="h-10 w-full sm:hidden bg-orange px-4 rounded-lg lg:rounded-xl text-white flex items-center justify-center hover:bg-white shadow-[inset_0_0_0_0_rgba(255,125,26,0.6)] hover:shadow-[inset_0_-4rem_0_0_rgba(255,125,26,0.6)] transition-all duration-300">
-                      Login
-                    </button>
-                  </NavLink>
-                </li>
-              </ul>
-            )}
-          </nav>
-          <div
-            ref={darkScreen}
-            className="screen -z-20 fixed inset-0 opacity-0 bg-black h-screen hidden lg:!hidden transition-all"
-            onClick={displayMenu}
-          ></div>
-        </div>
-        <Cart />
-        <div className="right">
-          <div className="user-bar flex items-center">
-            <div className="cart-container">
-              <div className="cart-wrapper mx-0 sm:mx-3 lg:mx-8 lg:mt-2 relative">
-                {total > 0 && (
-                  <div className="quantity-wrapper absolute px-2 rounded-full bg-orange z-10 -right-1/3 lg:-right-1/2 -top-2">
-                    <div className="amount text-white text-xs">{total}</div>
-                  </div>
-                )}
-                <i
-                  onClick={() => dispatch(cartDisplay(!showCart))}
-                  className={
-                    "cursor-pointer text-3xl !leading-none lg:text-2xl transition-colors " +
-                    (showCart ? "text-very-dark-blue" : "text-grayish-blue")
-                  }
-                >
-                  <ion-icon name="cart-outline"></ion-icon>
-                </i>
-              </div>
-            </div>
-            <div className="user h-6 w-6 mx-2 sm:h-8 sm:w-8 md:w-10 md:h-10 lg:w-12 lg:h-12 hidden">
-              <img src={avatar} alt="avatar" />
-            </div>
-            {!userInfo ? (
-              <NavLink to="/login">
-                <button className="h-10 hidden sm:block bg-orange px-4 rounded-lg lg:rounded-xl ml-2 text-white flex items-center justify-center border shadow-[inset_0_-1px_0_0_#ffede1] hover:shadow-[inset_0_-4rem_0_0_#ffede1] hover:text-orange overflow-hidden transition-all duration-300">
-                  Login
-                </button>
-              </NavLink>
-            ) : (
-              <div className="flex items-center ml-4 lg:ml-0 lg:mt-2">
-                {userInfo?.isAdmin && (
-                  <NavLink to="/admin/dashboard" className="mr-4">
-                    <i className="cursor-pointer text-2xl !leading-none lg:text-xl transition-colors mt-2 text-grayish-blue hover:text-very-dark-blue">
-                      <ion-icon name="grid-outline">
-                        <title>Admin Dashboard</title>
-                      </ion-icon>
-                    </i>
-                  </NavLink>
-                )}
-                <NavLink to="/user-profile">
-                  <i className="cursor-pointer text-2xl !leading-none lg:text-xl transition-colors mt-2 text-grayish-blue hover:text-very-dark-blue">
-                    <ion-icon name="person">
-                      <title>Username</title>
-                    </ion-icon>
-                  </i>
-                </NavLink>
-              </div>
-            )}
           </div>
+
+          <div className="flex items-center space-x-4 md:space-x-7">
+            <button className="relative" onClick={displayCart}>
+              <svg
+                width="22"
+                height="20"
+                xmlns="http://www.w3.org/2000/svg"
+                className="text-dark-grayish-blue hover:text-very-dark-blue duration-200"
+              >
+                <path
+                  d="M20.925 3.641H3.863L3.61.816A.896.896 0 0 0 2.717 0H.897a.896.896 0 1 0 0 1.792h1l1.031 11.483c.073.828.52 1.726 1.291 2.336C2.83 17.385 4.099 20 6.359 20c1.875 0 3.197-1.87 2.554-3.642h4.905c-.642 1.77.677 3.642 2.555 3.642a2.72 2.72 0 0 0 2.717-2.717 2.72 2.72 0 0 0-2.717-2.717H6.365c-.681 0-1.274-.41-1.53-1.009l14.321-.842a.896.896 0 0 0 .817-.677l1.821-7.283a.897.897 0 0 0-.87-1.114ZM6.358 18.208a.926.926 0 0 1 0-1.85.926.926 0 0 1 0 1.85Zm10.015 0a.926.926 0 0 1 0-1.85.926.926 0 0 1 0 1.85Zm2.021-7.243-13.8.81-.57-6.341h15.753l-1.383 5.53Z"
+                  fill="currentColor"
+                  fillRule="nonzero"
+                />
+              </svg>
+              {total > 0 && (
+                <div className="bg-orange text-white text-xs rounded-full h-6 w-6 flex items-center justify-center absolute -top-2 -right-2">
+                  {total}
+                </div>
+              )}
+            </button>
+
+            <div className="flex items-center space-x-2">
+              {userInfo ? (
+                <div className="flex items-center space-x-2">
+                  <NavLink
+                    to="/user-profile"
+                    className="flex items-center space-x-2 hover:opacity-75 duration-200"
+                  >
+                    <img
+                      src={avatar}
+                      alt=""
+                      className="w-8 h-8 md:w-12 md:h-12 rounded-full border-2 border-transparent hover:border-orange duration-200"
+                    />
+                    <span className="hidden md:block text-sm text-dark-grayish-blue">
+                      {userInfo.firstname}
+                    </span>
+                  </NavLink>
+                  
+                  {/* Show cart merge notification */}
+                  {cartMerged && (
+                    <div className="hidden md:block text-xs text-green-600 bg-green-50 px-2 py-1 rounded-md">
+                      Cart items merged!
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="flex items-center space-x-2">
+                  <NavLink
+                    to="/login"
+                    className="text-sm text-dark-grayish-blue hover:text-very-dark-blue duration-200"
+                  >
+                    Login
+                  </NavLink>
+                  <span className="text-dark-grayish-blue">|</span>
+                  <NavLink
+                    to="/register"
+                    className="text-sm text-dark-grayish-blue hover:text-very-dark-blue duration-200"
+                  >
+                    Register
+                  </NavLink>
+                </div>
+              )}
+            </div>
+          </div>
+        </nav>
+
+        {/* MOBILE MENU */}
+        <div
+          id="menu"
+          className="bg-black bg-opacity-75 absolute top-0 left-0 right-0 bottom-0 z-40 hidden"
+        >
+          <aside className="bg-white w-3/5 h-screen p-6">
+            <button
+              onClick={displayMenu}
+              className="mb-16"
+            >
+              <svg width="14" height="15" xmlns="http://www.w3.org/2000/svg">
+                <path
+                  d="m11.596.782 2.122 2.122L9.12 7.499l4.597 4.597-2.122 2.122L7 9.62l-4.595 4.597-2.122-2.122L4.878 7.5.282 2.904 2.404.782l4.595 4.596L11.596.782Z"
+                  fill="#69707D"
+                  fillRule="evenodd"
+                />
+              </svg>
+            </button>
+
+            <ul className="space-y-6">
+              <li>
+                <NavLink
+                  to="/collections"
+                  className="text-very-dark-blue font-bold text-lg"
+                  onClick={displayMenu}
+                >
+                  Collections
+                </NavLink>
+              </li>
+              <li>
+                <NavLink
+                  to="/products"
+                  className="text-very-dark-blue font-bold text-lg"
+                  onClick={displayMenu}
+                >
+                  Products
+                </NavLink>
+              </li>
+              <li>
+                <NavLink
+                  to="/about"
+                  className="text-very-dark-blue font-bold text-lg"
+                  onClick={displayMenu}
+                >
+                  About
+                </NavLink>
+              </li>
+              <li>
+                <NavLink
+                  to="/contact"
+                  className="text-very-dark-blue font-bold text-lg"
+                  onClick={displayMenu}
+                >
+                  Contact
+                </NavLink>
+              </li>
+            </ul>
+          </aside>
         </div>
-      </div>
-    </header>
+      </header>
+
+      {/* CART */}
+      <Cart />
+    </section>
   );
 };
 

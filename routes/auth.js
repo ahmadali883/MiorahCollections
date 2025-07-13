@@ -11,6 +11,10 @@ const User = require("../models/User");
 const dotenv = require("dotenv");
 const path = require('path');
 dotenv.config({ path: path.join(__dirname, '../config/config.env') });
+
+// Simple in-memory token blacklist (for production, use Redis or database)
+const tokenBlacklist = new Set();
+
 // @ route    GET api/auth
 // @desc      Get logged in user
 // @ access   Private
@@ -23,6 +27,76 @@ router.get("/", verifyToken, async (req, res) => {
     res.json(user);
   } catch (err) {
     console.error(err.message);
+    res.status(500).send("Server Error");
+  }
+});
+
+// @ route    POST api/auth/refresh
+// @desc      Refresh JWT token
+// @ access   Private
+router.post("/refresh", verifyToken, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select("-password");
+    if (!user) {
+      return res.status(400).json({ msg: "User doesn't exist" });
+    }
+
+    // Generate new token with extended expiration
+    const payload = {
+      user: {
+        id: user.id,
+        isAdmin: user.isAdmin,
+      },
+    };
+
+    jwt.sign(
+      payload,
+      process.env.JWTSECRET,
+      {
+        expiresIn: '24h', // Fresh 24 hour token
+      },
+      (error, token) => {
+        if (error) {
+          console.error('Token refresh error:', error);
+          return res.status(500).json({ msg: "Token refresh failed" });
+        }
+        res.json({ 
+          token,
+          message: "Token refreshed successfully",
+          expiresIn: '24h'
+        });
+      }
+    );
+  } catch (err) {
+    console.error('Token refresh error:', err.message);
+    res.status(500).send("Server Error");
+  }
+});
+
+// @ route    POST api/auth/logout
+// @desc      Logout user and invalidate token
+// @ access   Private
+router.post("/logout", verifyToken, async (req, res) => {
+  try {
+    const token = req.header("x-auth-token");
+    
+    // Add token to blacklist
+    if (token) {
+      tokenBlacklist.add(token);
+      
+      // Optional: Clean up old tokens periodically
+      // In production, implement proper cleanup mechanism
+      if (tokenBlacklist.size > 10000) {
+        tokenBlacklist.clear();
+      }
+    }
+
+    res.json({ 
+      message: "Logged out successfully",
+      success: true 
+    });
+  } catch (err) {
+    console.error('Logout error:', err.message);
     res.status(500).send("Server Error");
   }
 });
@@ -145,4 +219,6 @@ router.delete("/:id", verifyTokenAndAuthorization, async (req, res) => {
   }
 });
 
+// Export tokenBlacklist for use in middleware
 module.exports = router;
+module.exports.tokenBlacklist = tokenBlacklist;

@@ -13,7 +13,9 @@
     "test:email": "node test/emailTest.js",
     "test:email-images": "node test/emailImageTest.js",
     "test:auth-flow": "node test/authFlowTest.js",
-    "test:checkout-validation": "node test/checkoutValidationTest.js"
+    "test:checkout-validation": "node test/checkoutValidationTest.js",
+    "test:token-management": "node test/tokenManagementTest.js",
+    "test:cart-sync": "node test/cartSynchronizationTest.js"
   },
   "keywords": [],
   "author": "",
