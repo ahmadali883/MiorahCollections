@@ -84,8 +84,8 @@ const Login = () => {
 
   const handleRetry = () => {
     removeErrMsg();
-    const emailField = document.getElementById('email');
-    if (emailField) emailField.focus();
+    const loginField = document.getElementById('email'); // Field is named 'email' but accepts username or email
+    if (loginField) loginField.focus();
   };
 
   const resendVerification = async () => {
@@ -104,19 +104,17 @@ const Login = () => {
         error: null
       });
       
-      // Show success message
-      setSuccessMessage("Verification email sent! Please check your email.");
-      setEmailVerificationError(null);
+      // Clear success message after 5 seconds
+      setTimeout(() => {
+        setResendState(prev => ({ ...prev, success: false }));
+      }, 5000);
       
     } catch (error) {
       console.error('Resend verification error:', error);
-      
-      const errorMessage = error.response?.data?.msg || 'Failed to resend verification email. Please try again.';
-      
       setResendState({
         loading: false,
         success: false,
-        error: errorMessage
+        error: error.response?.data?.msg || 'Failed to resend verification email. Please try again.'
       });
     }
   };
@@ -154,39 +152,84 @@ const Login = () => {
             )}
             {emailVerificationError && (
               <div className="absolute top-28 left-0 right-0 z-10">
-                <div className="bg-amber-50 border border-amber-200 rounded-md p-4 text-sm">
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 text-sm shadow-lg">
                   <div className="flex items-start">
-                    <svg className="w-5 h-5 text-amber-500 mr-2 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L3.314 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                    </svg>
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-amber-800 mb-1">Email Verification Required</h3>
-                      <p className="text-amber-700 mb-3">{emailVerificationError.message}</p>
-                      <div className="flex flex-col sm:flex-row gap-2">
+                    <div className="flex-shrink-0">
+                      <svg className="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                    <div className="ml-3 flex-1">
+                      <h3 className="font-semibold text-blue-900 mb-2 text-base">Email Verification Required</h3>
+                      <p className="text-blue-800 mb-4 leading-relaxed">{emailVerificationError.message}</p>
+                      
+                      <div className="bg-blue-100 rounded-md p-3 mb-4">
+                        <h4 className="font-medium text-blue-900 mb-2">What to do next:</h4>
+                        <ol className="list-decimal list-inside text-blue-800 space-y-1">
+                          <li>Check your email inbox for a verification message</li>
+                          <li>Click the verification link in the email</li>
+                          <li>Return here and try logging in again</li>
+                        </ol>
+                      </div>
+
+                      <div className="text-xs text-blue-700 mb-4">
+                        <strong>Email:</strong> {emailVerificationError.email}
+                      </div>
+                      
+                      <div className="flex flex-col sm:flex-row gap-3">
                         <button
                           type="button"
                           onClick={resendVerification}
                           disabled={resendState.loading}
-                          className="px-3 py-1 bg-amber-500 text-white rounded hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium transition-colors flex items-center justify-center"
                         >
-                          {resendState.loading ? 'Sending...' : 'Resend Verification Email'}
+                          {resendState.loading ? (
+                            <>
+                              <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                              </svg>
+                              Sending...
+                            </>
+                          ) : (
+                            <>
+                              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                              </svg>
+                              Resend Verification Email
+                            </>
+                          )}
                         </button>
                         <button
                           type="button"
                           onClick={() => setEmailVerificationError(null)}
-                          className="px-3 py-1 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 text-sm"
+                          className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 text-sm font-medium transition-colors"
                         >
                           Dismiss
                         </button>
                       </div>
+                      
                       {resendState.success && (
-                        <div className="mt-2 text-green-700 text-sm">
-                          ✓ Verification email sent successfully!
+                        <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-md">
+                          <div className="flex items-center">
+                            <svg className="w-4 h-4 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                            </svg>
+                            <span className="text-green-800 text-sm font-medium">
+                              Verification email sent successfully! Check your inbox.
+                            </span>
+                          </div>
                         </div>
                       )}
+                      
                       {resendState.error && (
-                        <div className="mt-2 text-red-700 text-sm">
-                          {resendState.error}
+                        <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md">
+                          <div className="flex items-center">
+                            <svg className="w-4 h-4 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 19.5c-.77.833.192 2.5 1.732 2.5z" />
+                            </svg>
+                            <span className="text-red-800 text-sm">{resendState.error}</span>
+                          </div>
                         </div>
                       )}
                     </div>
@@ -196,12 +239,17 @@ const Login = () => {
             )}
             {successMessage && (
               <div className="absolute top-28 left-0 right-0 z-10">
-                <div className="bg-green-50 border border-green-200 rounded-md p-3 text-sm">
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-sm shadow-lg">
                   <div className="flex items-center">
-                    <svg className="w-4 h-4 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                    </svg>
-                    <span className="text-green-800">{successMessage}</span>
+                    <div className="flex-shrink-0">
+                      <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                    <div className="ml-3">
+                      <h3 className="font-medium text-green-900">Success!</h3>
+                      <p className="text-green-800 mt-1">{successMessage}</p>
+                    </div>
                   </div>
                 </div>
               </div>

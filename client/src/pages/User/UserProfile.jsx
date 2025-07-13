@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { logout } from "../../redux/reducers/authSlice";
+import { logoutUser } from "../../redux/reducers/authSlice";
 import Loading from "../../components/Loading";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { emptyCartOnLogoout } from "../../redux/reducers/cartSlice";
@@ -12,9 +12,26 @@ const UserProfile = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const onLogOut = () => {
-    dispatch(logout());
-    dispatch(emptyCartOnLogoout());
+  const onLogOut = async () => {
+    try {
+      await dispatch(logoutUser()).unwrap();
+      dispatch(emptyCartOnLogoout());
+      // Navigate to login page after successful logout
+      navigate("/login", {
+        state: {
+          message: "You have been logged out successfully."
+        }
+      });
+    } catch (error) {
+      console.error('Logout failed:', error);
+      // Even if server logout fails, still navigate to login
+      // The logoutUser thunk already clears local storage on failure
+      navigate("/login", {
+        state: {
+          message: "Logged out successfully."
+        }
+      });
+    }
   };
 
   // Handle case when user becomes invalid (e.g., deleted from database)

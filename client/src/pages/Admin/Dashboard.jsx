@@ -4,7 +4,6 @@ import { Navigate } from 'react-router-dom';
 import CategoryForm from '../../components/admin/CategoryForm';
 import ProductUploadForm from '../../components/admin/ProductUploadForm';
 import { loadUserFromStorage } from '../../redux/reducers/authSlice';
-import DataStatus from '../../components/admin/DataStatus';
 import { getAllProducts, getCategories } from '../../redux/reducers/productSlice';
 import AdminManager from '../../components/admin/AdminManager';
 
@@ -14,6 +13,11 @@ const Dashboard = () => {
   const { loading: productLoading } = useSelector(state => state.product);
   const dispatch = useDispatch();
   const [refreshing, setRefreshing] = useState(false);
+  
+  // Clean up old data status localStorage entries
+  useEffect(() => {
+    localStorage.removeItem('lastDataRefresh');
+  }, []);
   
   // If we have a token but no user info, load the user info
   useEffect(() => {
@@ -31,9 +35,6 @@ const Dashboard = () => {
       
       // Refresh categories
       await dispatch(getCategories()).unwrap();
-      
-      // Save the refresh timestamp
-      localStorage.setItem('lastDataRefresh', Date.now().toString());
       
       // Show success message
       alert('Data refreshed successfully!');
@@ -119,9 +120,6 @@ const Dashboard = () => {
             )}
           </button>
         </div>
-        
-        {/* Data Status Component */}
-        <DataStatus />
         
         {/* Tab navigation */}
         <div className="bg-white rounded-lg shadow-sm mb-6">

@@ -106,7 +106,7 @@ router.post("/logout", verifyToken, async (req, res) => {
 // @ access   Public
 router.post(
   "/",
-  body("email", "Please include a valid email").isEmail(),
+  body("email", "Please enter your email or username").notEmpty(),
   body("password", "Password is required").exists(),
 
   async (req, res) => {
@@ -118,23 +118,34 @@ router.post(
     const { email, password } = req.body;
 
     try {
-      let user = await User.findOne({ email });
+      // Try to find user by email first, then by username
+      let user = await User.findOne({ 
+        $or: [
+          { email: email.toLowerCase() },
+          { username: email.toLowerCase() }
+        ]
+      });
 
       if (!user) {
-        return res.status(400).json({ msg: "Email is invalid" });
+        return res.status(400).json({ 
+          msg: "Invalid email/username or password. Please check your credentials and try again." 
+        });
       }
 
       const isMatch = await bcrypt.compare(password, user.password);
       if (!isMatch) {
-        return res.status(400).json({ msg: "Password is invalid" });
+        return res.status(400).json({ 
+          msg: "Invalid email/username or password. Please check your credentials and try again." 
+        });
       }
 
       // Check if email is verified
       if (!user.isEmailVerified) {
         return res.status(400).json({ 
-          msg: "Please verify your email address before logging in. Check your email for verification instructions.",
+          msg: "Please verify your email address to complete login. Check your inbox for verification instructions.",
           emailVerified: false,
           email: user.email,
+          username: user.username,
           requiresVerification: true
         });
       }
