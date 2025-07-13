@@ -1,10 +1,11 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import AuthBg from "../../assets/user/auth-bg.jpg";
 import { NavLink } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { useForm } from "react-hook-form";
 import { loginUser, removeError } from "../../redux/reducers/authSlice";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
+import ErrorDisplay from "../../components/ErrorDisplay";
 
 const Login = () => {
   document.title = "Login Page";
@@ -15,6 +16,18 @@ const Login = () => {
   const dispatch = useDispatch();
   const { register, handleSubmit } = useForm();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [successMessage, setSuccessMessage] = useState(null);
+
+  // Handle success message from registration
+  useEffect(() => {
+    if (location.state?.message) {
+      setSuccessMessage(location.state.message);
+      // Clear the message after 5 seconds
+      setTimeout(() => setSuccessMessage(null), 5000);
+    }
+  }, [location.state]);
+
   // redirect authenticated user to profile screen
   useEffect(() => {
     if (userInfo) {
@@ -23,12 +36,28 @@ const Login = () => {
     }
   }, [navigate, userInfo]);
 
-  const submitForm = (data) => {
-    dispatch(loginUser(data));
+  const submitForm = async (data) => {
+    // Clear any existing errors
+    dispatch(removeError());
+    
+    try {
+      await dispatch(loginUser(data)).unwrap();
+      // Success is handled by the redirect in useEffect
+    } catch (err) {
+      // Error is handled by the Redux state
+      console.error('Login failed:', err);
+    }
   };
 
   const removeErrMsg = () => {
     dispatch(removeError());
+  };
+
+  const handleRetry = () => {
+    removeErrMsg();
+    // Optionally clear form and refocus on email field
+    const emailField = document.getElementById('email');
+    if (emailField) emailField.focus();
   };
 
   return (
@@ -50,20 +79,44 @@ const Login = () => {
             onSubmit={handleSubmit(submitForm)}
             onChange={removeErrMsg}
           >
+            <fieldset disabled={loading} className="w-full contents">
             {error && (
-              <p className=" absolute text-[#f96464] text-sm top-28">
-                {errMsg}
-              </p>
+              <div className="absolute top-28 left-0 right-0 z-10">
+                <ErrorDisplay 
+                  error={{ msg: errMsg, type: 'LOGIN_ERROR' }}
+                  onRetry={handleRetry}
+                  onDismiss={removeErrMsg}
+                  size="small"
+                  className="mx-0"
+                />
+              </div>
             )}
-            <div className="relative w-full  mb-2 py-3">
+            {successMessage && (
+              <div className="absolute top-28 left-0 right-0 z-10">
+                <div className="bg-green-50 border border-green-200 rounded-md p-3 text-sm">
+                  <div className="flex items-center">
+                    <svg className="w-4 h-4 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span className="text-green-800">{successMessage}</span>
+                  </div>
+                </div>
+              </div>
+            )}
+            <div className="relative w-full mb-2 py-3">
               <input
                 id="email"
                 name="email"
                 type="text"
-                className="peer h-10 w-full border-b-2 border-grayish-blue text-very-dark-blue placeholder-transparent focus:outline-none focus:border-orange"
+                className={`peer h-10 w-full border-b-2 text-very-dark-blue placeholder-transparent focus:outline-none ${
+                  error ? 'border-red-500 focus:border-red-500' : 'border-grayish-blue focus:border-orange'
+                }`}
                 placeholder="username or email"
                 {...register("email")}
                 required
+                aria-label="Username or Email"
+                aria-describedby="email-error"
+                autoComplete="username"
               />
               <label
                 htmlFor="email"
@@ -72,15 +125,20 @@ const Login = () => {
                 Username or Email
               </label>
             </div>
-            <div className="relative w-full  mb-6 py-3">
+            <div className="relative w-full mb-6 py-3">
               <input
                 id="password"
                 name="password"
                 type="password"
-                className="peer h-10 w-full border-b-2 border-grayish-blue text-very-dark-blue placeholder-transparent focus:outline-none focus:border-orange"
+                className={`peer h-10 w-full border-b-2 text-very-dark-blue placeholder-transparent focus:outline-none ${
+                  error ? 'border-red-500 focus:border-red-500' : 'border-grayish-blue focus:border-orange'
+                }`}
                 placeholder="Password"
                 {...register("password")}
                 required
+                aria-label="Password"
+                aria-describedby="password-error"
+                autoComplete="current-password"
               />
               <label
                 htmlFor="password"
@@ -93,30 +151,33 @@ const Login = () => {
               type="submit"
               className={
                 "w-full h-12 max-w-lg lg:max-w-none bg-orange rounded-md mt-3 mb-2 text-white flex items-center justify-center lg:w-2/5 border border-orange shadow-[inset_0_0_0_0_#ffede1] hover:shadow-[inset_0_-4rem_0_0_#ffede1] hover:text-orange transition-all duration-300 " +
-                (loading ? "cursor-not-allowed" : "cursor-auto")
+                (loading ? "cursor-not-allowed opacity-70" : "cursor-pointer hover:opacity-90")
               }
               disabled={loading}
             >
               {loading ? (
-                <div
-                  className=" spinner-border animate-spin inline-block w-4 h-4 border rounded-full"
-                  role="status"
-                >
-                  <span className="sr-only">Loading...</span>
+                <div className="flex items-center">
+                  <div
+                    className="spinner-border animate-spin inline-block w-4 h-4 border rounded-full mr-2"
+                    role="status"
+                  >
+                    <span className="sr-only">Loading...</span>
+                  </div>
+                  SIGNING IN...
                 </div>
               ) : (
-                <>LOGIN</>
+                <>SIGN IN</>
               )}
             </button>
             <br />
             <br />
             <div className="links mt-12 flex flex-wrap justify-between w-full">
-              <a
+              <NavLink
+                to="/forgot-password"
                 className="mb-5 lg:mb-0 border-b-2 border-solid hover:border-orange border-transparent transition-all"
-                href="/"
               >
                 FORGET PASSWORD?
-              </a>
+              </NavLink>
               <NavLink
                 to="/register"
                 className="border-b-2 border-solid border-transparent hover:border-orange transition-color"
@@ -125,6 +186,7 @@ const Login = () => {
                 CREATE NEW ACCOUNT
               </NavLink>
             </div>
+            </fieldset>
           </form>
         </div>
       </div>

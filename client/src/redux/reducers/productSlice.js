@@ -1,10 +1,10 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
-import axios from 'axios';
+import axios from '../../utils/axiosConfig';
 
 export const getAllProducts = createAsyncThunk(
   'product/getAllProducts',
   async (thunkAPI) => {
-    let res = await axios.get('/api/products/')
+    let res = await axios.get('/products/')
     let products = res.data
     return products
   })
@@ -12,7 +12,7 @@ export const getAllProducts = createAsyncThunk(
 export const getProductsByCollection = createAsyncThunk(
   'product/getProductsByCollection',
   async (collection, thunkAPI) => {
-    let res = await axios.get(`/api/products/?category=${collection}`)
+    let res = await axios.get(`/products/?category=${collection}`)
     let productsCollection = res.data
     return productsCollection
   })
@@ -20,7 +20,7 @@ export const getProductsByCollection = createAsyncThunk(
 export const getCategories = createAsyncThunk(
   'product/getCategories',
   async (thunkAPI) => {
-    let res = await axios.get('/api/categories/')
+    let res = await axios.get('/categories/')
     return res.data
   })
 
@@ -105,12 +105,12 @@ const productSlice = createSlice({
       // GET LIST OF ALL COLORS
       // This is simplified for now - you may need to adapt based on your data
       state.colors = Array.from(new Set(['black', 'white', 'red', 'blue', 'green', 'brown', 'yellow'])).sort()
-      
+
       // GET LIST OF CATEGORIES - ensure they're properly formatted
       if (state.categories.length > 0) {
         // Categories might already be loaded from API with proper structure
         // Just ensure they're in the right format for the filter
-        state.categories = state.categories.map(cat => 
+        state.categories = state.categories.map(cat =>
           typeof cat === 'object' ? cat : { name: cat }
         );
       } else {
@@ -121,7 +121,7 @@ const productSlice = createSlice({
             .filter(Boolean)
         )).sort().map(name => ({ name }));
       }
-            
+
       // GET LIST OF ALL BRANDS (ASSUMING IT'S STORED IN A CUSTOM FIELD)
       // This is a placeholder - you'll need to adapt based on your actual data structure
       state.brands = Array.from(new Set(['Nike', 'Adidas', 'Puma', 'New Balance'])).sort()
@@ -133,12 +133,12 @@ const productSlice = createSlice({
       if (state.filter.category === '' && state.filter.color === '') {
         state.containFilters = (state.filteredProducts.length < 1 ? state.products : state.filteredProducts).map(item => true)
       } else if (state.filter.category !== '' && state.filter.color === '') {
-        state.containFilters = (state.filteredProducts.length < 1 ? state.products : state.filteredProducts).map(item => 
+        state.containFilters = (state.filteredProducts.length < 1 ? state.products : state.filteredProducts).map(item =>
           item.category_id?.name === state.filter.category
         )
       } else {
         // This is simplified - you'll need to adapt color filtering based on your data
-        state.containFilters = (state.filteredProducts.length < 1 ? state.products : state.filteredProducts).map(item => 
+        state.containFilters = (state.filteredProducts.length < 1 ? state.products : state.filteredProducts).map(item =>
           (state.filter.category === '' || item.category_id?.name === state.filter.category)
         )
       }
@@ -207,10 +207,10 @@ const productSlice = createSlice({
   }
 })
 
-export const { 
-  getProducts, setError, getFilteredProducts, changeImage, 
-  prevPreview, nextPreview, prevSlide, nextSlide, 
-  getProductItem, quantityCount, selectFilters, selectSort, getFilters 
+export const {
+  getProducts, setError, getFilteredProducts, changeImage,
+  prevPreview, nextPreview, prevSlide, nextSlide,
+  getProductItem, quantityCount, selectFilters, selectSort, getFilters
 } = productSlice.actions;
 
 export default productSlice.reducer;

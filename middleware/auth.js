@@ -3,16 +3,8 @@ const dotenv = require("dotenv");
 const path = require('path');
 dotenv.config({ path: path.join(__dirname, '../config/config.env') });
 
-// Import token blacklist from auth routes
-let tokenBlacklist = new Set();
-try {
-  const authRoutes = require('../routes/auth');
-  if (authRoutes.tokenBlacklist) {
-    tokenBlacklist = authRoutes.tokenBlacklist;
-  }
-} catch (error) {
-  console.warn('Could not import token blacklist:', error.message);
-}
+// Simple in-memory token blacklist (shared between auth routes and middleware)
+const tokenBlacklist = new Set();
 
 const verifyToken = (req, res, next) => {
   // Get token from header
@@ -86,4 +78,5 @@ module.exports = {
   verifyTokenAndAuthorization,
   verifyTokenAndAdmin,
   verifyTokenAndUser,
+  tokenBlacklist,
 };

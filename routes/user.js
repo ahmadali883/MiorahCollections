@@ -64,29 +64,50 @@ router.get("/stats", verifyTokenAndAdmin, async (req, res) => {
 // @ access Public
 router.post(
   "/",
-  body("username", "Please enter a username").not().isEmpty(),
+  body("firstname", "Please enter your first name")
+    .isLength({ min: 2, max: 30 })
+    .withMessage("First name must be between 2 and 30 characters")
+    .matches(/^[a-zA-Z\s]+$/)
+    .withMessage("First name can only contain letters and spaces"),
+  body("lastname", "Please enter your last name")
+    .isLength({ min: 2, max: 30 })
+    .withMessage("Last name must be between 2 and 30 characters")
+    .matches(/^[a-zA-Z\s]+$/)
+    .withMessage("Last name can only contain letters and spaces"),
+  body("username", "Please enter a username")
+    .isLength({ min: 3, max: 20 })
+    .withMessage("Username must be between 3 and 20 characters")
+    .matches(/^[a-zA-Z0-9_]+$/)
+    .withMessage("Username can only contain letters, numbers, and underscores"),
   body("email", "Please include a valid email").isEmail(),
-  body(
-    "password",
-    "Please password shouldnt be less than 6 characters"
-  ).isLength({ min: 5 }),
+  body("password", "Please enter a valid password")
+    .isLength({ min: 6, max: 100 })
+    .withMessage("Password must be between 6 and 100 characters")
+    .matches(/^(?=.*[A-Za-z])(?=.*\d)/)
+    .withMessage("Password must contain at least one letter and one number"),
   async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
+      return res.status(400).json({ msg: errors.array()[0].msg });
     }
 
     const { firstname, lastname, username, email, password } = req.body;
 
     try {
-      let user = await User.findOne({ email });
+      // Check if user already exists by email
+      let existingUser = await User.findOne({ email });
+      if (existingUser) {
+        return res.status(400).json({ msg: "User with this email already exists" });
+      }
 
-      if (user) {
-        return res.status(400).send("User already exists");
+      // Check if username already exists
+      existingUser = await User.findOne({ username });
+      if (existingUser) {
+        return res.status(400).json({ msg: "Username already taken" });
       }
 
       // CREATE A NEW USER
-      user = new User({
+      const user = new User({
         firstname,
         lastname,
         username,

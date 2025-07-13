@@ -7,6 +7,7 @@ import Categories from "../pages/Categories";
 import Contact from "../pages/Contact";
 import Login from "../pages/User/Login";
 import Register from "../pages/User/Register";
+import ForgotPassword from "../pages/User/ForgotPassword";
 import Layout from "../components/layout/Layout";
 import Products from "../pages/Products";
 import ProductPage from "../pages/ProductPage";
@@ -43,6 +44,7 @@ const MyRoutes = () => {
         <Route path="/checkbox-test" element={<CheckboxTest />} />
         <Route path="/login" element={user ? <Navigate to="/" replace={true}  /> : <Login />} />
         <Route path="/register" element={user ? <Navigate to="/" replace={true}  /> : <Register />} />
+        <Route path="/forgot-password" element={user ? <Navigate to="/" replace={true}  /> : <ForgotPassword />} />
         <Route path="/user-profile" element={ <UserProfile/>}>
           <Route path="" element={<MyAccount />} />
           <Route path="orders" element={<MyOrders />} />

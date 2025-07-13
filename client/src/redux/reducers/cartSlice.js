@@ -1,5 +1,5 @@
 import { createAsyncThunk, createSlice, } from "@reduxjs/toolkit";
-import axios from "axios";
+import axios from "../../utils/axiosConfig";
 
 // Helper function to validate cart item structure
 const validateCartItem = (item) => {
@@ -81,7 +81,7 @@ export const createUserCart = createAsyncThunk('cart/createUserCart', async ({ p
     }
 
     // GET THE USER'S EXISTING CART
-    let res = await axios.get(`/api/cart/${_id}`, config)
+    let res = await axios.get(`/cart/${_id}`, config)
     let existingUserCart = res.data ? res.data.products : [];
 
     // Merge guest cart with user cart if guest cart has items
@@ -91,9 +91,9 @@ export const createUserCart = createAsyncThunk('cart/createUserCart', async ({ p
 
     // If no cart exists in DB or we need to merge, create/update cart
     if (res.data === null || guestCartItems.length > 0) {
-      await axios.post(`/api/cart/`, { userId: _id, products: finalCartItems }, config)
+      await axios.post(`/cart/`, { userId: _id, products: finalCartItems }, config)
       // Get the updated cart
-      res = await axios.get(`/api/cart/${_id}`, config)
+      res = await axios.get(`/cart/${_id}`, config)
       finalCartItems = res.data ? res.data.products : [];
     }
     
@@ -103,8 +103,27 @@ export const createUserCart = createAsyncThunk('cart/createUserCart', async ({ p
       mergedItemCount: guestCartItems.length
     };
   } catch (err) {
-    console.error('Error in createUserCart:', err.response?.data || err.message);
-    return rejectWithValue(err.response?.data || 'Error fetching cart')
+    // Enhanced error handling
+    let errorMessage = 'Failed to load cart.';
+    
+    if (err.response?.status === 401) {
+      errorMessage = 'Session expired. Please login again.';
+      localStorage.removeItem('userToken');
+      localStorage.removeItem('userInfo');
+    } else if (err.response?.status === 404) {
+      errorMessage = 'Cart not found. Creating new cart.';
+    } else if (err.response?.status >= 500) {
+      errorMessage = 'Server error. Please try again later.';
+    } else if (!err.response) {
+      errorMessage = 'Network error. Please check your connection.';
+    }
+    
+    console.error('Error in createUserCart:', err);
+    return rejectWithValue({
+      msg: errorMessage,
+      status: err.response?.status,
+      type: 'CART_LOAD_ERROR'
+    });
   }
 });
 
@@ -132,7 +151,7 @@ export const updateUserCartOptimistic = createAsyncThunk('cart/updateUserCartOpt
     // Then update server in background
     setTimeout(async () => {
       try {
-        await axios.put(`/api/cart/${_id}`, { products: cleanedProducts }, config);
+        await axios.put(`/cart/${_id}`, { products: cleanedProducts }, config);
       } catch (error) {
         console.error('Background cart sync failed:', error);
         // Could dispatch a separate action to handle sync failures
@@ -161,7 +180,7 @@ export const updateUserCart = createAsyncThunk('cart/updateUserCart', async ({ p
     }
     
     // UPDATE USER'S CART
-    let res = await axios.put(`/api/cart/${_id}`, { products: cleanedProducts }, config)
+    let res = await axios.put(`/cart/${_id}`, { products: cleanedProducts }, config)
     let data = res.data
     
     // Ensure we return cleaned array of products
@@ -188,7 +207,7 @@ export const clearUserCart = createAsyncThunk('cart/clearUserCart', async ({ _id
     }
     
     // Update cart with empty products array
-    await axios.put(`/api/cart/${_id}`, { products: [] }, config)
+    await axios.put(`/cart/${_id}`, { products: [] }, config)
     
     // Return empty array to clear the cart
     return []
@@ -214,7 +233,7 @@ export const decrementUserCartItem = createAsyncThunk('cart/decrementUserCartIte
     }
     
     // Get current cart
-    let currentCart = await axios.get(`/api/cart/${_id}`, config)
+    let currentCart = await axios.get(`/cart/${_id}`, config)
     currentCart = currentCart.data
     
     if (!currentCart || !currentCart.products) {
@@ -247,7 +266,7 @@ export const decrementUserCartItem = createAsyncThunk('cart/decrementUserCartIte
     updatedProducts = cleanCartData(updatedProducts);
     
     // Update cart in database
-    const updateRes = await axios.put(`/api/cart/${_id}`, { products: updatedProducts }, config)
+    const updateRes = await axios.put(`/cart/${_id}`, { products: updatedProducts }, config)
     
     return cleanCartData(updateRes.data.products || []);
   } catch (err) {
@@ -272,7 +291,7 @@ export const deleteUserCartItem = createAsyncThunk('cart/deleteUserCartItem', as
     }
     
     // Get current cart
-    let res = await axios.get(`/api/cart/${_id}`, config)
+    let res = await axios.get(`/cart/${_id}`, config)
     let currentCart = res.data
     
     if (!currentCart || !currentCart.products) {
@@ -283,7 +302,7 @@ export const deleteUserCartItem = createAsyncThunk('cart/deleteUserCartItem', as
     const updatedProducts = cleanCartData(currentCart.products.filter(item => item.id !== itemId));
     
     // Update cart in database
-    const updateRes = await axios.put(`/api/cart/${_id}`, { products: updatedProducts }, config)
+    const updateRes = await axios.put(`/cart/${_id}`, { products: updatedProducts }, config)
     
     return cleanCartData(updateRes.data.products || []);
   } catch (err) {
@@ -308,7 +327,7 @@ export const addToUserCart = createAsyncThunk('cart/addToUserCart', async ({ pro
     }
     
     // Get current cart
-    let res = await axios.get(`/api/cart/${_id}`, config)
+    let res = await axios.get(`/cart/${_id}`, config)
     let currentCart = res.data
     
     let currentProducts = currentCart ? cleanCartData(currentCart.products) : [];
@@ -341,7 +360,7 @@ export const addToUserCart = createAsyncThunk('cart/addToUserCart', async ({ pro
     currentProducts = cleanCartData(currentProducts);
     
     // Update cart in database
-    const updateRes = await axios.put(`/api/cart/${_id}`, { products: currentProducts }, config)
+    const updateRes = await axios.put(`/cart/${_id}`, { products: currentProducts }, config)
     
     return cleanCartData(updateRes.data.products || []);
   } catch (err) {

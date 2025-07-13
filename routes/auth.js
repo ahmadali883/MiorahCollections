@@ -6,14 +6,14 @@ const jwt = require("jsonwebtoken");
 const {
   verifyToken,
   verifyTokenAndAuthorization,
+  tokenBlacklist,
 } = require("../middleware/auth");
 const User = require("../models/User");
 const dotenv = require("dotenv");
 const path = require('path');
 dotenv.config({ path: path.join(__dirname, '../config/config.env') });
 
-// Simple in-memory token blacklist (for production, use Redis or database)
-const tokenBlacklist = new Set();
+// tokenBlacklist is now imported from middleware/auth.js to avoid circular dependency
 
 // @ route    GET api/auth
 // @desc      Get logged in user
@@ -219,6 +219,41 @@ router.delete("/:id", verifyTokenAndAuthorization, async (req, res) => {
   }
 });
 
-// Export tokenBlacklist for use in middleware
+// @ route    POST api/auth/forgot-password
+// @desc      Send password reset email
+// @ access   Public
+router.post("/forgot-password", 
+  body("email", "Please include a valid email").isEmail(),
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ msg: errors.array()[0].msg });
+    }
+
+    const { email } = req.body;
+
+    try {
+      const user = await User.findOne({ email });
+      
+      if (!user) {
+        // Don't reveal if user exists or not for security
+        return res.json({ 
+          message: "If an account with that email exists, you will receive password reset instructions." 
+        });
+      }
+
+      // TODO: Implement actual email sending with reset token
+      // For now, just respond with success message
+      console.log(`Password reset requested for user: ${user.email}`);
+      
+      res.json({ 
+        message: "Password reset instructions have been sent to your email address." 
+      });
+    } catch (err) {
+      console.error(err.message);
+      res.status(500).send("Server Error");
+    }
+  }
+);
+
 module.exports = router;
-module.exports.tokenBlacklist = tokenBlacklist;

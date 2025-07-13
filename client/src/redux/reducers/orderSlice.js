@@ -1,5 +1,5 @@
 import { createAsyncThunk, createSlice, } from "@reduxjs/toolkit";
-import axios from "axios";
+import axios from "../../utils/axiosConfig";
 
 export const getUserOrder = createAsyncThunk('order/getUserOrder', async ({ user }, { rejectWithValue }) => {
   try {
@@ -14,7 +14,7 @@ export const getUserOrder = createAsyncThunk('order/getUserOrder', async ({ user
       },
     }
 
-    let { data } = await axios.get(`/api/orders/${user}`, config)
+    let { data } = await axios.get(`/orders/${user}`, config)
     return data
 
   } catch (err) {
@@ -36,19 +36,19 @@ export const createOrder = createAsyncThunk('order/createOrder', async (orderDat
       },
     }
     
-    let res = await axios.get(`/api/orders/${orderData.user}`, config)
+    let res = await axios.get(`/orders/${orderData.user}`, config)
 
 
     // PREVENT DUPLICATED ORDER
     if (res.data.filter(item => item.paymentID === orderData.paymentID).length > 0) {
       // ORDER ALREADY MADE
     } else {
-      await axios.post(`/api/orders/`,
+      await axios.post(`/orders/`,
         (orderData)
         , config)
     }
 
-    let { data } = await axios.get(`/api/orders/${orderData.user}`, config)
+    let { data } = await axios.get(`/orders/${orderData.user}`, config)
     return data
 
   } catch (err) {
@@ -66,7 +66,7 @@ export const createGuestOrder = createAsyncThunk('order/createGuestOrder', async
     }
     
     // For guest orders, just create the order without checking for duplicates
-    let res = await axios.post('/api/orders/guest', orderData, config)
+    let res = await axios.post('/orders/guest', orderData, config)
     return res.data
 
   } catch (err) {

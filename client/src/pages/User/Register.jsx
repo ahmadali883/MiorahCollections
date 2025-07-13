@@ -4,6 +4,7 @@ import { NavLink, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { useDispatch, useSelector } from "react-redux";
 import { registerUser, removeError } from "../../redux/reducers/authSlice";
+import ErrorDisplay from "../../components/ErrorDisplay";
 
 const Register = () => {
   document.title = "Registration Page";
@@ -25,7 +26,15 @@ const Register = () => {
   useEffect(() => {
     // redirect user to login page if registration was successful
     if (success) {
-      navigate("/login");
+      // Add a slight delay to show success feedback
+      setTimeout(() => {
+        navigate("/login", { 
+          state: { 
+            message: "Registration successful! Please login with your credentials.",
+            type: "success" 
+          } 
+        });
+      }, 1500);
     }
     // redirect authenticated user to profile screen
     if (userInfo) {
@@ -34,12 +43,28 @@ const Register = () => {
     // eslint-disable-next-line
   }, [navigate, userInfo, success]);
 
-  const submitForm = (data) => {
-    dispatch(registerUser(data));
+  const submitForm = async (data) => {
+    // Clear any existing errors
+    dispatch(removeError());
+    
+    try {
+      await dispatch(registerUser(data)).unwrap();
+      // Success is handled by the redirect in useEffect
+    } catch (err) {
+      // Error is handled by the Redux state
+      console.error('Registration failed:', err);
+    }
   };
 
   const removeErrMsg = () => {
     dispatch(removeError());
+  };
+
+  const handleRetry = () => {
+    removeErrMsg();
+    // Focus on first field with error or first field
+    const firstField = document.getElementById('firstname');
+    if (firstField) firstField.focus();
   };
 
   return (
@@ -61,24 +86,62 @@ const Register = () => {
             onSubmit={handleSubmit(submitForm)}
             onChange={removeErrMsg}
           >
+            <fieldset disabled={loading || success} className="w-full contents">
             {error && (
-              <p className=" absolute text-[#f96464] text-sm top-28">
-                {errMsg}
-              </p>
+              <div className="absolute top-28 left-0 right-0 z-10">
+                <ErrorDisplay 
+                  error={{ msg: errMsg, type: 'REGISTRATION_ERROR' }}
+                  onRetry={handleRetry}
+                  onDismiss={removeErrMsg}
+                  size="small"
+                  className="mx-0"
+                />
+              </div>
             )}
-            <div className="relative w-full lg:w-[45%]  mb-2 py-3">
+            {success && (
+              <div className="absolute top-28 left-0 right-0 z-10">
+                <div className="bg-green-50 border border-green-200 rounded-md p-3 text-sm">
+                  <div className="flex items-center">
+                    <svg className="w-4 h-4 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span className="text-green-800">Registration successful! Redirecting to login...</span>
+                  </div>
+                </div>
+              </div>
+            )}
+            <div className="relative w-full lg:w-[45%] mb-2 py-3">
               <input
                 id="firstname"
                 name="firstname"
                 type="text"
-                className="peer h-10 w-full border-b-2 border-grayish-blue text-very-dark-blue placeholder-transparent focus:outline-none focus:border-orange"
+                className={`peer h-10 w-full border-b-2 text-very-dark-blue placeholder-transparent focus:outline-none ${
+                  errors.firstname 
+                    ? 'border-red-500 focus:border-red-500' 
+                    : 'border-grayish-blue focus:border-orange'
+                }`}
                 placeholder="First Name"
                 {...register("firstname", {
                   required: "Please enter your first name",
+                  minLength: {
+                    value: 2,
+                    message: "First name must be at least 2 characters long",
+                  },
+                  maxLength: {
+                    value: 30,
+                    message: "First name cannot exceed 30 characters",
+                  },
+                  pattern: {
+                    value: /^[a-zA-Z\s]+$/,
+                    message: "First name can only contain letters and spaces",
+                  },
                 })}
+                aria-label="First Name"
+                aria-describedby="firstname-error"
+                autoComplete="given-name"
               />
               {errors.firstname && (
-                <p className="text-sm text-[red] italic">
+                <p id="firstname-error" className="text-sm text-[red] italic" role="alert">
                   {errors.firstname.message}
                 </p>
               )}
@@ -94,14 +157,33 @@ const Register = () => {
                 id="lastname"
                 name="lastname"
                 type="text"
-                className="peer h-10 w-full border-b-2 border-grayish-blue text-very-dark-blue placeholder-transparent focus:outline-none focus:border-orange"
+                className={`peer h-10 w-full border-b-2 text-very-dark-blue placeholder-transparent focus:outline-none ${
+                  errors.lastname 
+                    ? 'border-red-500 focus:border-red-500' 
+                    : 'border-grayish-blue focus:border-orange'
+                }`}
                 placeholder="Last Name"
                 {...register("lastname", {
                   required: "Please enter your last name",
+                  minLength: {
+                    value: 2,
+                    message: "Last name must be at least 2 characters long",
+                  },
+                  maxLength: {
+                    value: 30,
+                    message: "Last name cannot exceed 30 characters",
+                  },
+                  pattern: {
+                    value: /^[a-zA-Z\s]+$/,
+                    message: "Last name can only contain letters and spaces",
+                  },
                 })}
+                aria-label="Last Name"
+                aria-describedby="lastname-error"
+                autoComplete="family-name"
               />
               {errors.lastname && (
-                <p className="text-sm text-[red] italic">
+                <p id="lastname-error" className="text-sm text-[red] italic" role="alert">
                   {errors.lastname.message}
                 </p>
               )}
@@ -117,14 +199,33 @@ const Register = () => {
                 id="username"
                 name="username"
                 type="text"
-                className="peer h-10 w-full border-b-2 border-grayish-blue text-very-dark-blue placeholder-transparent focus:outline-none focus:border-orange"
+                className={`peer h-10 w-full border-b-2 text-very-dark-blue placeholder-transparent focus:outline-none ${
+                  errors.username 
+                    ? 'border-red-500 focus:border-red-500' 
+                    : 'border-grayish-blue focus:border-orange'
+                }`}
                 placeholder="username"
                 {...register("username", {
                   required: "Please enter your username",
+                  minLength: {
+                    value: 3,
+                    message: "Username must be at least 3 characters long",
+                  },
+                  maxLength: {
+                    value: 20,
+                    message: "Username cannot exceed 20 characters",
+                  },
+                  pattern: {
+                    value: /^[a-zA-Z0-9_]+$/,
+                    message: "Username can only contain letters, numbers, and underscores",
+                  },
                 })}
+                aria-label="Username"
+                aria-describedby="username-error"
+                autoComplete="username"
               />
               {errors.username && (
-                <p className="text-sm text-[red] italic">
+                <p id="username-error" className="text-sm text-[red] italic" role="alert">
                   {errors.username.message}
                 </p>
               )}
@@ -140,7 +241,11 @@ const Register = () => {
                 id="email"
                 name="email"
                 type="email"
-                className="peer h-10 w-full border-b-2 border-grayish-blue text-very-dark-blue placeholder-transparent focus:outline-none focus:border-orange"
+                className={`peer h-10 w-full border-b-2 text-very-dark-blue placeholder-transparent focus:outline-none ${
+                  errors.email 
+                    ? 'border-red-500 focus:border-red-500' 
+                    : 'border-grayish-blue focus:border-orange'
+                }`}
                 placeholder="email"
                 {...register("email", {
                   required: "Please include an email",
@@ -149,9 +254,12 @@ const Register = () => {
                     message: "Please include a valid email",
                   },
                 })}
+                aria-label="Email Address"
+                aria-describedby="email-error"
+                autoComplete="email"
               />
               {errors.email && (
-                <p className="text-sm text-[red] italic">
+                <p id="email-error" className="text-sm text-[red] italic" role="alert">
                   {errors.email.message}
                 </p>
               )}
@@ -167,19 +275,34 @@ const Register = () => {
                 id="password"
                 name="password"
                 type="password"
-                className="peer h-10 w-full border-b-2 border-grayish-blue text-very-dark-blue placeholder-transparent focus:outline-none focus:border-orange"
+                className={`peer h-10 w-full border-b-2 text-very-dark-blue placeholder-transparent focus:outline-none ${
+                  errors.password 
+                    ? 'border-red-500 focus:border-red-500' 
+                    : 'border-grayish-blue focus:border-orange'
+                }`}
                 placeholder="Password"
-                {...register("userPassword", {
+                {...register("password", {
                   required: "Please enter your password",
                   minLength: {
                     value: 6,
-                    message: "Password shouldn't be less than 6 characters",
+                    message: "Password must be at least 6 characters long",
+                  },
+                  maxLength: {
+                    value: 100,
+                    message: "Password cannot exceed 100 characters",
+                  },
+                  pattern: {
+                    value: /^(?=.*[A-Za-z])(?=.*\d)/,
+                    message: "Password must contain at least one letter and one number",
                   },
                 })}
+                aria-label="Password"
+                aria-describedby="password-error"
+                autoComplete="new-password"
               />
-              {errors.userPassword && (
-                <p className="text-sm text-[red] italic">
-                  {errors.userPassword.message}
+              {errors.password && (
+                <p id="password-error" className="text-sm text-[red] italic" role="alert">
+                  {errors.password.message}
                 </p>
               )}
               <label
@@ -194,19 +317,26 @@ const Register = () => {
                 id="confirm-password"
                 name="confirm-password"
                 type="password"
-                className="peer h-10 w-full border-b-2 border-grayish-blue text-very-dark-blue placeholder-transparent focus:outline-none focus:border-orange"
+                className={`peer h-10 w-full border-b-2 text-very-dark-blue placeholder-transparent focus:outline-none ${
+                  errors.confirmPassword 
+                    ? 'border-red-500 focus:border-red-500' 
+                    : 'border-grayish-blue focus:border-orange'
+                }`}
                 placeholder="Confirm Password"
-                {...register("password", {
-                  required: true,
+                {...register("confirmPassword", {
+                  required: "Please confirm your password",
                   validate: (value) => {
-                    const { userPassword } = getValues();
-                    return userPassword === value || "Passwords should match";
+                    const { password } = getValues();
+                    return password === value || "Passwords do not match";
                   },
                 })}
+                aria-label="Confirm Password"
+                aria-describedby="confirm-password-error"
+                autoComplete="new-password"
               />
-              {errors.password && (
-                <p className="text-sm text-[red] italic">
-                  {errors.password.message}
+              {errors.confirmPassword && (
+                <p id="confirm-password-error" className="text-sm text-[red] italic" role="alert">
+                  {errors.confirmPassword.message}
                 </p>
               )}
               <label
@@ -221,21 +351,32 @@ const Register = () => {
               data in accordance with the <b>PRIVACY POLICY</b>
             </div>
             <button
+              type="submit"
               className={
                 "w-full h-12 max-w-lg lg:max-w-none bg-orange rounded-md mt-3 lg:mt-5 mb-2 text-white flex items-center justify-center lg:w-2/5 shadow-[inset_0_-1px_0_0_#ffede1] hover:shadow-[inset_0_-4rem_0_0_#ffede1] hover:text-orange border transition-all duration-300 " +
-                (loading ? "cursor-not-allowed" : "cursor-auto")
+                (loading || success ? "cursor-not-allowed opacity-70" : "cursor-pointer hover:opacity-90")
               }
-              disabled={loading}
+              disabled={loading || success}
             >
               {loading ? (
-                <div
-                  className="spinner-border animate-spin inline-block w-4 h-4 border rounded-full"
-                  role="status"
-                >
-                  <span className="sr-only">Loading...</span>
+                <div className="flex items-center">
+                  <div
+                    className="spinner-border animate-spin inline-block w-4 h-4 border rounded-full mr-2"
+                    role="status"
+                  >
+                    <span className="sr-only">Loading...</span>
+                  </div>
+                  CREATING ACCOUNT...
+                </div>
+              ) : success ? (
+                <div className="flex items-center">
+                  <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/>
+                  </svg>
+                  SUCCESS
                 </div>
               ) : (
-                <>CREATE</>
+                <>CREATE ACCOUNT</>
               )}
             </button>
             <div className="links mt-12 flex flex-wrap w-full">
@@ -250,6 +391,7 @@ const Register = () => {
                 LOGIN
               </NavLink>
             </div>
+            </fieldset>
           </form>
         </div>
       </div>

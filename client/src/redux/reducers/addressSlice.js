@@ -1,5 +1,5 @@
 import { createAsyncThunk, createSlice, } from "@reduxjs/toolkit";
-import axios from "axios";
+import axios from "../../utils/axiosConfig";
 
 export const getUserAddress = createAsyncThunk('address/getUserAddress', async ({ user }, { rejectWithValue }) => {
   try {
@@ -14,7 +14,7 @@ export const getUserAddress = createAsyncThunk('address/getUserAddress', async (
       },
     }
 
-    let { data } = await axios.get(`/api/address/${user}`, config)
+    let { data } = await axios.get(`/address/${user}`, config)
     return data
 
   } catch (err) {
@@ -36,11 +36,11 @@ export const createAddress = createAsyncThunk('address/createAddress', async (ad
       },
     }
 
-    await axios.post(`/api/address/`,
+    await axios.post(`/address/`,
       (addressData)
       , config)
 
-    let { data } = await axios.get(`/api/address/${addressData.user}`, config)
+    let { data } = await axios.get(`/address/${addressData.user}`, config)
     return data
 
   } catch (err) {
@@ -62,9 +62,9 @@ export const deleteAddress = createAsyncThunk('address/deleteAddress', async ({ 
       },
     }
 
-    await axios.delete(`/api/address/${address}`, config)
+    await axios.delete(`/address/${address}`, config)
 
-    let { data } = await axios.get(`/api/address/${user}`, config)
+    let { data } = await axios.get(`/address/${user}`, config)
     return data
 
   } catch (err) {
@@ -86,9 +86,9 @@ export const updateAddress = createAsyncThunk('address/updateAddress', async (ad
       },
     }
 
-    await axios.put(`/api/address/${addressInfo._id}`, addressInfo, config)
+    await axios.put(`/address/${addressInfo._id}`, addressInfo, config)
 
-    let { data } = await axios.get(`/api/address/${addressInfo.user}`, config)
+    let { data } = await axios.get(`/address/${addressInfo.user}`, config)
     return data
 
   } catch (err) {
@@ -109,7 +109,7 @@ export const setDefaultAddress = createAsyncThunk('address/setDefaultAddress', a
       },
     }
 
-    let { data } = await axios.put(`/api/address/default/${addressInfo.id}`, addressInfo, config)
+    let { data } = await axios.put(`/address/default/${addressInfo.id}`, addressInfo, config)
     return data
 
   } catch (err) {

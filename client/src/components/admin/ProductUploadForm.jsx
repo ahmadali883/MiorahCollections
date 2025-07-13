@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import axios from '../../utils/axiosConfig';
 import { useSelector } from 'react-redux';
 
 const ProductUploadForm = () => {
@@ -81,7 +81,7 @@ const ProductUploadForm = () => {
         }
       };
       
-      const res = await axios.post('/api/products/upload', productFormData, config);
+      const res = await axios.post('/products/upload', productFormData, config);
       
       setMessage({ 
         type: 'success', 

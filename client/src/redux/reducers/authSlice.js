@@ -1,5 +1,5 @@
 import { createAsyncThunk, createSlice, } from "@reduxjs/toolkit";
-import axios from "axios";
+import axios from "../../utils/axiosConfig";
 
 export const registerUser = createAsyncThunk("auth/registerUser", async ({ firstname, lastname, username, email, password }, { rejectWithValue }) => {
   try {
@@ -9,12 +9,23 @@ export const registerUser = createAsyncThunk("auth/registerUser", async ({ first
       },
     }
     
-    let res = await axios.post("/api/users", { firstname, lastname, username, email, password }, config)
+    let res = await axios.post("/users", { firstname, lastname, username, email, password }, config)
     let data = res.data
     return data
 
   } catch (err) {
-    return rejectWithValue(err.response.data)
+    // Enhanced error handling
+    const errorMessage = err.response?.data?.msg || 
+                        err.response?.data?.message || 
+                        err.message || 
+                        'Registration failed. Please try again.';
+    
+    console.error('Registration error:', err);
+    return rejectWithValue({
+      msg: errorMessage,
+      status: err.response?.status,
+      type: 'REGISTRATION_ERROR'
+    });
   }
 }
 )
@@ -27,7 +38,7 @@ export const loginUser = createAsyncThunk("auth/loginUser", async ({ email, pass
       },
     }
     
-    let res = await axios.post("/api/auth", { email, password }, config)
+    let res = await axios.post("/auth", { email, password }, config)
     let data = res.data
 
     // Store token and user info with timestamp
@@ -37,7 +48,25 @@ export const loginUser = createAsyncThunk("auth/loginUser", async ({ email, pass
     return data
 
   } catch (err) {
-    return rejectWithValue(err.response.data)
+    // Enhanced error handling
+    let errorMessage = 'Login failed. Please try again.';
+    
+    if (err.response?.status === 400) {
+      errorMessage = err.response.data?.msg || 'Invalid email or password.';
+    } else if (err.response?.status === 429) {
+      errorMessage = 'Too many login attempts. Please try again later.';
+    } else if (err.response?.status >= 500) {
+      errorMessage = 'Server error. Please try again later.';
+    } else if (!err.response) {
+      errorMessage = 'Network error. Please check your connection.';
+    }
+    
+    console.error('Login error:', err);
+    return rejectWithValue({
+      msg: errorMessage,
+      status: err.response?.status,
+      type: 'LOGIN_ERROR'
+    });
   }
 }
 )
@@ -51,11 +80,33 @@ export const getUserDetails = createAsyncThunk('user/getUserDetails', async (arg
         'x-auth-token': auth.userToken,
       },
     }
-    const { data } = await axios.get(`/api/auth`, config)
+    const { data } = await axios.get(`/auth`, config)
     return data
 
   } catch (err) {
-    return rejectWithValue(err.response.data)
+    // Enhanced error handling
+    let errorMessage = 'Failed to get user details.';
+    
+    if (err.response?.status === 401) {
+      errorMessage = 'Session expired. Please login again.';
+      // Clear invalid token
+      localStorage.removeItem('userToken');
+      localStorage.removeItem('userInfo');
+      localStorage.removeItem('tokenTimestamp');
+    } else if (err.response?.status === 404) {
+      errorMessage = 'User not found.';
+    } else if (err.response?.status >= 500) {
+      errorMessage = 'Server error. Please try again later.';
+    } else if (!err.response) {
+      errorMessage = 'Network error. Please check your connection.';
+    }
+    
+    console.error('Get user details error:', err);
+    return rejectWithValue({
+      msg: errorMessage,
+      status: err.response?.status,
+      type: 'USER_DETAILS_ERROR'
+    });
   }
 }
 )
@@ -70,7 +121,7 @@ export const updateUser = createAsyncThunk('user/updateUser', async ({ userData,
         'x-auth-token': auth.userToken,
       },
     }
-    const { data } = await axios.put(`/api/users/${_id}`, userData, config)
+    const { data } = await axios.put(`/users/${_id}`, userData, config)
     return data
 
   } catch (err) {
@@ -97,7 +148,7 @@ export const refreshToken = createAsyncThunk(
       };
       
       // Call the refresh endpoint (we'll need to create this)
-      const { data } = await axios.post('/api/auth/refresh', {}, config);
+      const { data } = await axios.post('/auth/refresh', {}, config);
       
       // Store new token with timestamp
       localStorage.setItem('userToken', data.token);
@@ -147,7 +198,7 @@ export const loadUserFromStorage = createAsyncThunk(
       if (hoursOld > 23) {
         // Try to refresh token first
         try {
-          const refreshResult = await axios.post('/api/auth/refresh', {}, {
+          const refreshResult = await axios.post('/auth/refresh', {}, {
             headers: { 'x-auth-token': auth.userToken }
           });
           
@@ -156,7 +207,7 @@ export const loadUserFromStorage = createAsyncThunk(
           localStorage.setItem('tokenTimestamp', Date.now().toString());
           
           // Get user details with new token
-          const userResult = await axios.get('/api/auth', {
+          const userResult = await axios.get('/auth', {
             headers: { 'x-auth-token': refreshResult.data.token }
           });
           
@@ -173,7 +224,7 @@ export const loadUserFromStorage = createAsyncThunk(
         },
       };
       
-      const { data } = await axios.get('/api/auth', config);
+      const { data } = await axios.get('/auth', config);
       // Store updated user info
       localStorage.setItem('userInfo', JSON.stringify(data));
       return data;
@@ -252,7 +303,7 @@ export const logoutUser = createAsyncThunk(
         };
         
         // Call logout endpoint to invalidate token server-side
-        await axios.post('/api/auth/logout', {}, config);
+        await axios.post('/auth/logout', {}, config);
       }
       
       // Clear local storage
@@ -349,7 +400,7 @@ const authSlice = createSlice({
     [registerUser.rejected]: (state, { payload }) => {
       state.loading = false
       state.error = true
-      state.errMsg = payload.msg ? payload.msg : payload
+      state.errMsg = payload.msg || payload.message || payload || "Registration failed"
     },
     [loginUser.pending]: (state) => {
       state.loading = true
@@ -367,7 +418,7 @@ const authSlice = createSlice({
     [loginUser.rejected]: (state, { payload }) => {
       state.loading = false
       state.error = true
-      state.errMsg = payload.msg ? payload.msg : payload
+      state.errMsg = payload.msg || payload.message || payload || "Login failed"
     },
 
     [getUserDetails.pending]: (state) => {
