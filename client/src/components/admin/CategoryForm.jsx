@@ -17,7 +17,7 @@ const CategoryForm = () => {
 
   const fetchCategories = async () => {
     try {
-      const res = await axios.get('/api/categories');
+      const res = await axios.get('/categories');
       setCategories(res.data);
     } catch (err) {
       console.error('Error fetching categories', err);
@@ -52,10 +52,10 @@ const CategoryForm = () => {
 
       let res;
       if (editMode) {
-        res = await axios.put(`/api/categories/${currentId}`, formData, config);
+        res = await axios.put(`/categories/${currentId}`, formData, config);
         setMessage({ type: 'success', text: `Category "${res.data.name}" updated successfully` });
       } else {
-        res = await axios.post('/api/categories', formData, config);
+        res = await axios.post('/categories', formData, config);
         setMessage({ type: 'success', text: `Category "${res.data.name}" created successfully` });
       }
 
@@ -96,7 +96,7 @@ const CategoryForm = () => {
         }
       };
 
-      await axios.delete(`/api/categories/${id}`, config);
+      await axios.delete(`/categories/${id}`, config);
       setMessage({ type: 'success', text: `Category "${name}" deleted successfully` });
       fetchCategories();
     } catch (err) {

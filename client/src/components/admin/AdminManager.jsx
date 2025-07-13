@@ -24,7 +24,7 @@ const AdminManager = () => {
         }
       };
       
-      const res = await axios.get('/api/users', config);
+      const res = await axios.get('/users', config);
       setUsers(res.data);
       setMessage({ type: 'success', text: 'Users loaded successfully' });
     } catch (err) {
@@ -52,7 +52,7 @@ const AdminManager = () => {
         }
       };
       
-      await axios.put(`/api/users/${userId}/admin`, {}, config);
+      await axios.put(`/users/${userId}/admin`, {}, config);
       
       // Update local state
       setUsers(users.map(user => 

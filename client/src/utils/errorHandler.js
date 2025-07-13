@@ -4,12 +4,13 @@
 
 // Error types enum
 export const ERROR_TYPES = {
-  NETWORK: 'NETWORK',
+  NETWORK_ERROR: 'NETWORK_ERROR',
   VALIDATION: 'VALIDATION',
   AUTHENTICATION: 'AUTHENTICATION',
   AUTHORIZATION: 'AUTHORIZATION',
-  SERVER: 'SERVER',
+  SERVER_ERROR: 'SERVER_ERROR',
   NOT_FOUND: 'NOT_FOUND',
+  BAD_REQUEST: 'BAD_REQUEST',
   TIMEOUT: 'TIMEOUT',
   RATE_LIMIT: 'RATE_LIMIT',
   UNKNOWN: 'UNKNOWN'
@@ -25,7 +26,7 @@ export const ERROR_SEVERITY = {
 
 // Standard error messages
 const ERROR_MESSAGES = {
-  [ERROR_TYPES.NETWORK]: {
+  [ERROR_TYPES.NETWORK_ERROR]: {
     title: 'Connection Error',
     message: 'Please check your internet connection and try again.',
     severity: ERROR_SEVERITY.MEDIUM
@@ -45,19 +46,24 @@ const ERROR_MESSAGES = {
     message: 'You don\'t have permission to perform this action.',
     severity: ERROR_SEVERITY.HIGH
   },
-  [ERROR_TYPES.SERVER]: {
+  [ERROR_TYPES.SERVER_ERROR]: {
     title: 'Server Error',
     message: 'Something went wrong on our end. Please try again later.',
     severity: ERROR_SEVERITY.HIGH
   },
   [ERROR_TYPES.NOT_FOUND]: {
     title: 'Not Found',
-    message: 'The requested resource was not found.',
+    message: 'The requested resource could not be found.',
+    severity: ERROR_SEVERITY.MEDIUM
+  },
+  [ERROR_TYPES.BAD_REQUEST]: {
+    title: 'Bad Request',
+    message: 'Invalid request. Please check your input and try again.',
     severity: ERROR_SEVERITY.MEDIUM
   },
   [ERROR_TYPES.TIMEOUT]: {
     title: 'Request Timeout',
-    message: 'The request took too long to complete. Please try again.',
+    message: 'The request took too long to process. Please try again.',
     severity: ERROR_SEVERITY.MEDIUM
   },
   [ERROR_TYPES.RATE_LIMIT]: {
@@ -98,7 +104,7 @@ export const parseHttpError = (error) => {
   if (!error.response) {
     // Network error
     return new AppError(
-      ERROR_TYPES.NETWORK,
+      ERROR_TYPES.NETWORK_ERROR,
       'Unable to connect to server. Please check your internet connection.',
       error
     );
@@ -110,7 +116,7 @@ export const parseHttpError = (error) => {
 
   switch (status) {
     case 400:
-      errorType = ERROR_TYPES.VALIDATION;
+      errorType = ERROR_TYPES.BAD_REQUEST;
       message = data?.msg || data?.message || 'Invalid request data.';
       break;
     case 401:
@@ -137,7 +143,7 @@ export const parseHttpError = (error) => {
     case 502:
     case 503:
     case 504:
-      errorType = ERROR_TYPES.SERVER;
+      errorType = ERROR_TYPES.SERVER_ERROR;
       message = data?.msg || data?.message || 'Server error. Please try again later.';
       break;
     default:

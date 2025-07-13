@@ -58,25 +58,32 @@ axiosInstance.interceptors.response.use(
     return response;
   },
   (error) => {
-    // Remove request from active requests
-    if (error.config) {
-      const requestKey = `${error.config.method}_${error.config.url}`;
-      activeRequests.delete(requestKey);
-    }
+    console.error('🚨 API Error:', error.response?.status, error.response?.data || error.message);
+    
+    // Enhanced error mapping
+    const appError = {
+      message: error.response?.data?.msg || error.response?.data?.message || error.message || 'An unexpected error occurred',
+      status: error.response?.status || 500,
+      type: ERROR_TYPES.SERVER_ERROR,
+      data: error.response?.data || null,
+    };
 
-    // Handle cancelled requests
-    if (axios.isCancel(error)) {
-      console.log('Request cancelled:', error.message);
-      return Promise.reject(new Error('Request cancelled'));
+    // Enhanced error type classification
+    if (error.response?.status === 401) {
+      appError.type = ERROR_TYPES.AUTHENTICATION;
+    } else if (error.response?.status === 403) {
+      appError.type = ERROR_TYPES.AUTHORIZATION;
+    } else if (error.response?.status === 404) {
+      appError.type = ERROR_TYPES.NOT_FOUND;
+    } else if (error.response?.status === 400) {
+      appError.type = ERROR_TYPES.BAD_REQUEST;
+    } else if (error.response?.status === 429) {
+      appError.type = ERROR_TYPES.RATE_LIMIT;
+    } else if (error.response?.status >= 500) {
+      appError.type = ERROR_TYPES.SERVER_ERROR;
+    } else if (!error.response) {
+      appError.type = ERROR_TYPES.NETWORK_ERROR;
     }
-
-    // Parse and log error
-    const appError = parseHttpError(error);
-    logError(appError, { 
-      context: 'Response Interceptor',
-      url: error.config?.url,
-      method: error.config?.method 
-    });
 
     // Handle authentication errors
     if (appError.type === ERROR_TYPES.AUTHENTICATION || appError.type === ERROR_TYPES.AUTHORIZATION) {
@@ -85,6 +92,7 @@ axiosInstance.interceptors.response.use(
       // Define protected routes that require authentication
       const protectedRoutes = [
         '/user-profile',
+        '/profile',
         '/checkout',
         '/admin',
         '/orders',
@@ -101,12 +109,91 @@ axiosInstance.interceptors.response.use(
       
       // Only clear storage and redirect if accessing protected routes
       if (isProtectedRoute) {
+        console.warn('🚨 Authentication error on protected route - clearing user data');
         localStorage.removeItem('userToken');
         localStorage.removeItem('userInfo');
+        localStorage.removeItem('tokenTimestamp');
+        
+        // Dispatch clearInvalidUser action
+        const store = window.__REDUX_STORE__;
+        if (store) {
+          store.dispatch({ type: 'auth/clearInvalidUser' });
+        }
         
         // If we're not already on the login page, redirect
         if (currentPath !== '/login' && currentPath !== '/register') {
-          window.location.href = '/login';
+          setTimeout(() => {
+            window.location.href = '/login';
+          }, 100);
+        }
+      }
+    }
+
+    // Handle user deleted/not found errors (404 on user-related endpoints)
+    if (appError.type === ERROR_TYPES.NOT_FOUND || appError.type === ERROR_TYPES.BAD_REQUEST) {
+      const currentPath = window.location.pathname;
+      const requestUrl = error.config?.url || '';
+      
+      // User-related endpoints that would fail if user is deleted
+      const userRelatedEndpoints = [
+        '/auth',
+        '/users/',
+        '/cart/',
+        '/orders/',
+        '/address/',
+        '/user/'
+      ];
+      
+      // Check if this is a user-related endpoint
+      const isUserRelatedEndpoint = userRelatedEndpoints.some(endpoint => 
+        requestUrl.includes(endpoint)
+      );
+      
+      // User-protected routes
+      const userProtectedRoutes = [
+        '/profile',
+        '/user-profile',
+        '/checkout',
+        '/orders',
+        '/addresses',
+        '/notifications',
+        '/password',
+        '/settings'
+      ];
+      
+      const isUserProtectedRoute = userProtectedRoutes.some(route => 
+        currentPath.startsWith(route)
+      );
+      
+      // Special handling for auth endpoint failures
+      const isAuthEndpoint = requestUrl.includes('/auth');
+      
+      // If user-related endpoint fails AND we're on a user-protected route
+      // OR if the auth endpoint fails with 404/400 (user doesn't exist)
+      if ((isUserRelatedEndpoint && isUserProtectedRoute) || (isAuthEndpoint && appError.status === 400)) {
+        console.warn('🚨 User-related endpoint failed - user may have been deleted from database');
+        console.warn('Request URL:', requestUrl);
+        console.warn('Error status:', appError.status);
+        console.warn('Error message:', appError.message);
+        
+        // Clear all user data
+        localStorage.removeItem('userToken');
+        localStorage.removeItem('userInfo');
+        localStorage.removeItem('tokenTimestamp');
+        
+        // Dispatch clearInvalidUser action
+        const store = window.__REDUX_STORE__;
+        if (store) {
+          console.warn('🚨 Dispatching clearInvalidUser action');
+          store.dispatch({ type: 'auth/clearInvalidUser' });
+        }
+        
+        // Don't redirect immediately for non-auth endpoints
+        // Let the component handle the error state first
+        if (isAuthEndpoint) {
+          setTimeout(() => {
+            window.location.href = '/login';
+          }, 100);
         }
       }
     }
@@ -130,6 +217,28 @@ export const cancelRequest = (method, url) => {
   if (cancelToken) {
     cancelToken.cancel(`Request ${requestKey} cancelled`);
     activeRequests.delete(requestKey);
+  }
+};
+
+// Function to clear invalid user data manually
+export const clearInvalidUserData = () => {
+  console.warn('Clearing invalid user data');
+  
+  // Clear localStorage
+  localStorage.removeItem('userToken');
+  localStorage.removeItem('userInfo');
+  localStorage.removeItem('tokenTimestamp');
+  
+  // Clear Redux state
+  const store = window.__REDUX_STORE__;
+  if (store) {
+    store.dispatch({ type: 'auth/clearInvalidUser' });
+  }
+  
+  // Redirect to login if not already there
+  const currentPath = window.location.pathname;
+  if (currentPath !== '/login' && currentPath !== '/register') {
+    window.location.href = '/login?message=Your account is no longer valid. Please log in again.';
   }
 };
 
@@ -164,31 +273,5 @@ export const post = (url, data = {}, config = {}) => apiRequest({ method: 'post'
 export const put = (url, data = {}, config = {}) => apiRequest({ method: 'put', url, data, ...config });
 export const patch = (url, data = {}, config = {}) => apiRequest({ method: 'patch', url, data, ...config });
 export const deleteRequest = (url, config = {}) => apiRequest({ method: 'delete', url, ...config });
-
-// Hook for component cleanup
-export const useRequestCancellation = () => {
-  const cancelTokensRef = React.useRef([]);
-
-  const createCancelToken = () => {
-    const cancelToken = axios.CancelToken.source();
-    cancelTokensRef.current.push(cancelToken);
-    return cancelToken;
-  };
-
-  const cancelAllRequests = () => {
-    cancelTokensRef.current.forEach(cancelToken => {
-      cancelToken.cancel('Component unmounted');
-    });
-    cancelTokensRef.current = [];
-  };
-
-  React.useEffect(() => {
-    return () => {
-      cancelAllRequests();
-    };
-  }, []);
-
-  return { createCancelToken, cancelAllRequests };
-};
 
 export default axiosInstance; 

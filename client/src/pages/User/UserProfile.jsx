@@ -1,8 +1,8 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { logout } from "../../redux/reducers/authSlice";
 import Loading from "../../components/Loading";
-import { NavLink, Outlet } from "react-router-dom";
+import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { emptyCartOnLogoout } from "../../redux/reducers/cartSlice";
 
 const UserProfile = () => {
@@ -10,10 +10,110 @@ const UserProfile = () => {
     (state) => state.auth
   );
   const dispatch = useDispatch();
+  const navigate = useNavigate();
+
   const onLogOut = () => {
     dispatch(logout());
     dispatch(emptyCartOnLogoout());
   };
+
+  // Handle case when user becomes invalid (e.g., deleted from database)
+  useEffect(() => {
+    // If we have no token, redirect to login
+    if (!userToken) {
+      navigate("/login", { 
+        state: { 
+          message: "Please log in to access your profile." 
+        } 
+      });
+      return;
+    }
+
+    // If we have a token but no userInfo and there's an error, redirect to login
+    if (userToken && !userInfo && error) {
+      console.warn('User profile: Token exists but no userInfo - redirecting to login');
+      navigate("/login", { 
+        state: { 
+          message: "Your session has expired. Please log in again." 
+        } 
+      });
+      return;
+    }
+  }, [userToken, userInfo, error, navigate]);
+
+  // Show loading state while checking authentication
+  if (loading) {
+    return (
+      <section className="h-auto pt-2 min-h-[80vh] bg-[#f9f9f9]">
+        <div className="max-w-xl lg:max-w-7xl relative px-5 py-20 items-center mx-auto lg:mx-20 xl:mx-28 2xl:mx-40 3xl:mx-auto lg:px-1 xl:px-3 2xl:px-1">
+          <div className="flex items-center justify-center">
+            <Loading />
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // If no token, don't render anything (useEffect will handle redirect)
+  if (!userToken) {
+    return null;
+  }
+
+  // If error state, show error message
+  if (error && userErrorMsg) {
+    return (
+      <section className="h-auto pt-2 min-h-[80vh] bg-[#f9f9f9]">
+        <div className="max-w-xl lg:max-w-7xl relative px-5 py-20 items-center mx-auto lg:mx-20 xl:mx-28 2xl:mx-40 3xl:mx-auto lg:px-1 xl:px-3 2xl:px-1">
+          <div className="bg-white rounded-lg shadow-md p-8 text-center">
+            <div className="w-16 h-16 mx-auto mb-4 bg-red-100 rounded-full flex items-center justify-center">
+              <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 19.5c-.77.833.192 2.5 1.732 2.5z" />
+              </svg>
+            </div>
+            <h2 className="text-xl font-bold text-gray-900 mb-4">Account Error</h2>
+            <p className="text-gray-600 mb-6">{userErrorMsg}</p>
+            <div className="space-y-4">
+              <NavLink
+                to="/login"
+                className="block w-full bg-orange text-white py-3 px-6 rounded-md hover:bg-orange-600 transition-colors"
+              >
+                Login Again
+              </NavLink>
+              <NavLink
+                to="/register"
+                className="block w-full bg-gray-500 text-white py-3 px-6 rounded-md hover:bg-gray-600 transition-colors"
+              >
+                Create New Account
+              </NavLink>
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // If no userInfo, show login prompt
+  if (!userInfo) {
+    return (
+      <section className="h-auto pt-2 min-h-[80vh] bg-[#f9f9f9]">
+        <div className="max-w-xl lg:max-w-7xl relative px-5 py-20 items-center mx-auto lg:mx-20 xl:mx-28 2xl:mx-40 3xl:mx-auto lg:px-1 xl:px-3 2xl:px-1">
+          <div className="bg-white rounded-lg shadow-md p-8 text-center">
+            <h2 className="text-xl font-bold text-gray-900 mb-4">Please Log In</h2>
+            <p className="text-gray-600 mb-6">
+              Please{" "}
+              <NavLink
+                to="/login"
+                className="text-orange border-b-2 border-b-orange font-bold hover:opacity-75"
+              >
+                Login
+              </NavLink>{" "}
+              to view this page
+            </p>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="h-auto pt-2 min-h-[80vh] bg-[#f9f9f9]">
@@ -30,11 +130,7 @@ const UserProfile = () => {
             </div>
             <h3 className="capitalize text-lg text-center my-6">
               <div className="font-bold ">
-                {userInfo && (
-                  <>
-                    {userInfo.firstname} {userInfo.lastname}
-                  </>
-                )}
+                {userInfo.firstname} {userInfo.lastname}
               </div>
             </h3>
 
@@ -107,7 +203,7 @@ const UserProfile = () => {
                 }
                 x-state-description='undefined: "bg-pale-orange border-orange text-dark-grayish-blue", undefined: "border-transparent text-gray-900 hover:bg-gray-50 hover:text-gray-900"'
               >
-                <ion-icon class="p-2 text-base" name="key"></ion-icon>
+                <ion-icon class="p-2 text-base" name="lock-closed"></ion-icon>
                 <span className="truncate">Password</span>
               </NavLink>
 
@@ -122,64 +218,43 @@ const UserProfile = () => {
                 x-state-description='undefined: "bg-pale-orange border-orange text-dark-grayish-blue", undefined: "border-transparent text-gray-900 hover:bg-gray-50 hover:text-gray-900"'
               >
                 <ion-icon class="p-2 text-base" name="settings"></ion-icon>
-                <span className="truncate">Account setting</span>
+                <span className="truncate">Settings</span>
               </NavLink>
-              <hr className="text-grayish-blue" />
+
+              {/* Admin Dashboard Link - Only visible for admin users */}
+              {userInfo.isAdmin && (
+                <>
+                  <hr className="my-2 border-grayish-blue" />
+                  <div className="px-3 py-1">
+                    <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Admin</span>
+                  </div>
+                  <NavLink
+                    to="/dashboard"
+                    className={({ isActive }) =>
+                      "text-dark-grayish-blue group px-3 py-2 flex items-center text-sm font-medium bg-orange-50 transition-all duration-200" +
+                      (!isActive
+                        ? " border-l-4 border-transparent hover:bg-orange hover:text-white hover:border-orange"
+                        : " border-l-4 bg-orange border-orange text-white")
+                    }
+                  >
+                    <ion-icon class="p-2 text-base" name="shield-checkmark"></ion-icon>
+                    <span className="truncate">Admin Dashboard</span>
+                  </NavLink>
+                </>
+              )}
+
+              <hr className="my-2 border-grayish-blue" />
               <button
-                onClick={() => onLogOut()}
-                className="text-grayish-blue flex items-center px-3 py-2"
+                onClick={onLogOut}
+                className="w-full text-left text-dark-grayish-blue group hover:bg-light-grayish-blue px-3 py-2 flex items-center text-sm font-medium"
               >
                 <ion-icon class="p-2 text-base" name="log-out"></ion-icon>
-                <span className="truncate">Log out</span>
+                <span className="truncate">Logout</span>
               </button>
             </nav>
           </div>
           <div className="bg-white flex-1 rounded-lg shadow-md p-8">
-            {userToken ? (
-              <>
-                {!error ? (
-                  <>
-                    {loading ? (
-                      <div className=" w-full h-full flex items-center justify-center">
-                        <Loading />
-                      </div>
-                    ) : (
-                      <>
-                        {userInfo ? (
-                          <Outlet />
-                        ) : (
-                          <>
-                            Please{" "}
-                            <NavLink
-                              to="/login"
-                              className="text-sm border-b-2 border-b-orange font-bold"
-                            >
-                              Login
-                            </NavLink>{" "}
-                            to view this page
-                          </>
-                        )}
-                      </>
-                    )}
-                  </>
-                ) : (
-                  <p className=" mt-20 text-center text-very-dark-blue">
-                    {userErrorMsg}
-                  </p>
-                )}
-              </>
-            ) : (
-              <>
-                Please{" "}
-                <NavLink
-                  to="/login"
-                  className="text-sm border-b-2 border-b-orange font-bold"
-                >
-                  Login
-                </NavLink>{" "}
-                to view this page
-              </>
-            )}{" "}
+            <Outlet />
           </div>
         </div>
       </div>

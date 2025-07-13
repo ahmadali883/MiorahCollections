@@ -382,6 +382,26 @@ const authSlice = createSlice({
       state.refreshing = false
       state.sessionWarning = null
     },
+    clearInvalidUser: (state) => {
+      // Clear all user data when user is invalid (e.g., deleted from database)
+      localStorage.removeItem('userToken')
+      localStorage.removeItem('userInfo')
+      localStorage.removeItem('tokenTimestamp')
+      state.loading = false
+      state.userInfo = null
+      state.userToken = null
+      state.error = true
+      state.errMsg = 'Your account is no longer valid. Please log in again.'
+      state.refreshing = false
+      state.sessionWarning = null
+      state.success = false
+      state.userEmail = ''
+      state.userErrorMsg = ''
+      state.userUpdateError = false
+      state.userUpdateErrorMsg = ''
+      state.editable = false
+      state.updating = false
+    },
     clearSessionWarning: (state) => {
       state.sessionWarning = null
     },
@@ -554,6 +574,7 @@ export const {
   enableUpdate, 
   cancelUpdate, 
   logout, 
+  clearInvalidUser, 
   clearSessionWarning, 
   updateLastActivity 
 } = authSlice.actions

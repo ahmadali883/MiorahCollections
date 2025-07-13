@@ -33,7 +33,20 @@ const Login = () => {
       // Clear the message after 5 seconds
       setTimeout(() => setSuccessMessage(null), 5000);
     }
-  }, [location.state]);
+    
+    // Handle query parameters for messages
+    const urlParams = new URLSearchParams(location.search);
+    const queryMessage = urlParams.get('message');
+    if (queryMessage) {
+      setSuccessMessage(queryMessage);
+      // Clear the message after 5 seconds
+      setTimeout(() => setSuccessMessage(null), 5000);
+      
+      // Clean up the URL by removing query parameters
+      const cleanUrl = window.location.pathname;
+      window.history.replaceState({}, document.title, cleanUrl);
+    }
+  }, [location.state, location.search]);
 
   // redirect authenticated user to profile screen
   useEffect(() => {
