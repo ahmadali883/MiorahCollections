@@ -8,7 +8,9 @@ import {
   deleteUserCartItem, 
   emptyCart, 
   clearUserCart,
-  clearError
+  clearError,
+  addToCart,
+  addToUserCart
 } from "../../redux/reducers/cartSlice";
 import { motion, AnimatePresence } from "framer-motion"
 
@@ -65,6 +67,23 @@ const Cart = () => {
     } else {
       // For guest users, update local state
       dispatch(deleteItem(itemId));
+    }
+  };
+
+  const handleIncrementItem = (item) => {
+    if (userInfo) {
+      // For logged-in users, add one more of this product to cart
+      dispatch(addToUserCart({ 
+        product: item.product, 
+        quantity: 1, 
+        _id: userInfo._id 
+      }));
+    } else {
+      // For guest users, add one more to local cart
+      dispatch(addToCart({ 
+        product: item.product, 
+        quantity: 1 
+      }));
     }
   };
 
@@ -187,10 +206,7 @@ const Cart = () => {
                               {item.quantity || 0}
                             </span>
                             <button
-                              onClick={() => {
-                                // Add item (increment quantity) - reuse addToCart logic
-                                // This would need to be implemented in the cart slice
-                              }}
+                              onClick={() => handleIncrementItem(item)}
                               className="w-6 h-6 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-100 transition-colors"
                               disabled={loading || (item.quantity || 0) >= 100}
                             >

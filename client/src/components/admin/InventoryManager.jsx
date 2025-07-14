@@ -239,7 +239,7 @@ const InventoryManager = () => {
           <div className="bg-green-50 p-4 rounded-lg">
             <h3 className="text-sm font-medium text-green-600">Total Value</h3>
             <p className="text-2xl font-bold text-green-900">
-              ${inventoryStats.inventoryValue?.totalValue?.toFixed(2) || '0.00'}
+              Rs {inventoryStats.inventoryValue?.totalValue?.toFixed(2) || '0.00'}
             </p>
           </div>
         </div>
@@ -426,6 +426,7 @@ const InventoryManager = () => {
                       <div>
                         <div className="text-sm font-medium text-gray-900">{product.name}</div>
                         <div className="text-sm text-gray-500">SKU: {product.sku || 'N/A'}</div>
+                        <div className="text-xs text-gray-400">ID: #{product._id.slice(-8)}</div>
                       </div>
                     </div>
                   </td>
@@ -433,10 +434,7 @@ const InventoryManager = () => {
                     {product.category_id?.name || 'No Category'}
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-900">
-                    <div>${product.price.toFixed(2)}</div>
-                    {product.discount_price && (
-                      <div className="text-xs text-green-600">${product.discount_price.toFixed(2)} (Sale)</div>
-                    )}
+                    <div>Rs {product.price.toFixed(2)}</div>
                   </td>
                   <td className="px-6 py-4">
                     <div className="text-sm text-gray-900">{product.stock_quantity}</div>
@@ -939,7 +937,7 @@ const StockAlertsModal = ({ lowStockProducts, threshold, setThreshold, onRefresh
                   </div>
                   <div className="text-right">
                     <div className="font-medium text-red-600">{product.stock_quantity} remaining</div>
-                    <div className="text-sm text-gray-500">${product.price.toFixed(2)}</div>
+                    <div className="text-sm text-gray-500">Rs {product.price.toFixed(2)}</div>
                   </div>
                 </div>
               ))

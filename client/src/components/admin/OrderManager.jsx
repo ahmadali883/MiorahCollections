@@ -346,7 +346,7 @@ const OrderManager = () => {
                     {formatDate(order.createdAt)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    ${order.amount.toFixed(2)}
+                    Rs {order.amount.toFixed(2)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadge(order.status)}`}>
@@ -535,7 +535,7 @@ const OrderDetailsModal = ({ orderId, orderDetails, loading, onClose, onStatusUp
                         {orderDetails.status.charAt(0).toUpperCase() + orderDetails.status.slice(1)}
                       </span>
                     </p>
-                    <p><span className="font-medium">Total Amount:</span> ${orderDetails.amount.toFixed(2)}</p>
+                    <p><span className="font-medium">Total Amount:</span> Rs {orderDetails.amount.toFixed(2)}</p>
                     <p><span className="font-medium">Payment ID:</span> {orderDetails.paymentID}</p>
                   </div>
                 </div>
@@ -585,10 +585,13 @@ const OrderDetailsModal = ({ orderId, orderDetails, loading, onClose, onStatusUp
                       <div>
                         <p className="font-medium">{product.name}</p>
                         <p className="text-sm text-gray-600">Quantity: {product.quantity}</p>
+                        {product._id && (
+                          <p className="text-xs text-gray-500">Product ID: #{product._id.slice(-8)}</p>
+                        )}
                       </div>
                       <div className="text-right">
-                        <p className="font-medium">${product.price.toFixed(2)}</p>
-                        <p className="text-sm text-gray-600">Total: ${(product.price * product.quantity).toFixed(2)}</p>
+                        <p className="font-medium">Rs {product.price.toFixed(2)}</p>
+                        <p className="text-sm text-gray-600">Total: Rs {(product.price * product.quantity).toFixed(2)}</p>
                       </div>
                     </div>
                   ))}
