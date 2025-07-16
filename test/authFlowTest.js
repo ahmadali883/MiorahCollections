@@ -1,4 +1,5 @@
 const axios = require('axios');
+const api = require('../client/src/config/api');
 
 // Test public routes accessibility for unregistered users
 const testPublicRoutes = async () => {
@@ -19,7 +20,7 @@ const testPublicRoutes = async () => {
   
   for (const endpoint of publicEndpoints) {
     try {
-      const response = await axios.get(`${baseURL}${endpoint.url}`);
+      const response = await api.get(`${baseURL}${endpoint.url}`);
       console.log(`✅ ${endpoint.description}: Status ${response.status}`);
     } catch (error) {
       if (error.response?.status === 401 || error.response?.status === 403) {
@@ -42,7 +43,7 @@ const testPublicRoutes = async () => {
   
   for (const endpoint of protectedEndpoints) {
     try {
-      const response = await axios.get(`${baseURL}${endpoint.url}`);
+      const response = await api.get(`${baseURL}${endpoint.url}`);
       console.log(`⚠️  ${endpoint.description}: Unexpectedly accessible (Status ${response.status})`);
     } catch (error) {
       if (error.response?.status === 401) {

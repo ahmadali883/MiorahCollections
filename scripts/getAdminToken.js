@@ -1,5 +1,6 @@
 const axios = require('axios');
 const readline = require('readline');
+const api = require('../client/src/config/api');
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -12,7 +13,7 @@ const getAdminToken = async () => {
     rl.question('Enter admin email: ', async (email) => {
       rl.question('Enter admin password: ', async (password) => {
         try {
-          const response = await axios.post('http://localhost:5000/api/auth', {
+          const response = await api.post('http://localhost:5000/api/auth', {
             email,
             password
           });

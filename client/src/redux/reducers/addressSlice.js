@@ -1,5 +1,6 @@
 import { createAsyncThunk, createSlice, } from "@reduxjs/toolkit";
 import axios from "../../utils/axiosConfig";
+import api from "../../config/api";
 
 export const getUserAddress = createAsyncThunk('address/getUserAddress', async ({ user }, { rejectWithValue }) => {
   try {
@@ -14,7 +15,8 @@ export const getUserAddress = createAsyncThunk('address/getUserAddress', async (
       },
     }
 
-    let { data } = await axios.get(`/address/${user}`, config)
+    // let { data } = await axios.get(`/address/${user}`, config)
+    let {data}= await api.get(`/address/${user}`, config)
     return data
 
   } catch (err) {
@@ -36,11 +38,13 @@ export const createAddress = createAsyncThunk('address/createAddress', async (ad
       },
     }
 
-    await axios.post(`/address/`,
+    // await axios.post(`/address/`,
+    await api.post(`/address/`,
       (addressData)
       , config)
 
-    let { data } = await axios.get(`/address/${addressData.user}`, config)
+    // let { data } = await axios.get(`/address/${addressData.user}`, config)
+    let { data } = await api.get(`/address/${addressData.user}`, config)
     return data
 
   } catch (err) {
@@ -62,9 +66,11 @@ export const deleteAddress = createAsyncThunk('address/deleteAddress', async ({ 
       },
     }
 
-    await axios.delete(`/address/${address}`, config)
+    // await axios.delete(`/address/${address}`, config)
+    await api.delete(`/address/${address}`, config)
 
-    let { data } = await axios.get(`/address/${user}`, config)
+    // let { data } = await axios.get(`/address/${user}`, config)
+    let { data } = await api.get(`/address/${user}`, config)
     return data
 
   } catch (err) {
@@ -86,9 +92,11 @@ export const updateAddress = createAsyncThunk('address/updateAddress', async (ad
       },
     }
 
-    await axios.put(`/address/${addressInfo._id}`, addressInfo, config)
+    // await axios.put(`/address/${addressInfo._id}`, addressInfo, config)
+    await api.put(`/address/${addressInfo._id}`, addressInfo, config)
 
-    let { data } = await axios.get(`/address/${addressInfo.user}`, config)
+    // let { data } = await axios.get(`/address/${addressInfo.user}`, config)
+    let { data } = await api.get(`/address/${addressInfo.user}`, config)
     return data
 
   } catch (err) {
@@ -109,7 +117,8 @@ export const setDefaultAddress = createAsyncThunk('address/setDefaultAddress', a
       },
     }
 
-    let { data } = await axios.put(`/address/default/${addressInfo.id}`, addressInfo, config)
+    // let { data } = await axios.put(`/address/default/${addressInfo.id}`, addressInfo, config)
+    let { data } = await api.put(`/address/default/${addressInfo.id}`, addressInfo, config)
     return data
 
   } catch (err) {

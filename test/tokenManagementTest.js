@@ -1,4 +1,5 @@
 const axios = require('axios');
+const api = require('../client/src/config/api');
 
 // Test token management functionality
 const testTokenManagement = async () => {
@@ -18,7 +19,7 @@ const testTokenManagement = async () => {
       password: 'testpassword123'
     };
     
-    const loginResponse = await axios.post(`${baseURL}/auth`, loginData);
+    const loginResponse = await api.post(`${baseURL}/auth`, loginData);
     authToken = loginResponse.data.token;
     userCredentials = loginResponse.data.user;
     
@@ -41,7 +42,7 @@ const testTokenManagement = async () => {
       }
     };
     
-    const userResponse = await axios.get(`${baseURL}/auth`, config);
+    const userResponse = await api.get(`${baseURL}/auth`, config);
     console.log('✅ Token validation successful');
     console.log(`Authenticated user: ${userResponse.data.firstname}`);
   } catch (error) {
@@ -59,7 +60,7 @@ const testTokenManagement = async () => {
       }
     };
     
-    const refreshResponse = await axios.post(`${baseURL}/auth/refresh`, {}, config);
+    const refreshResponse = await api.post(`${baseURL}/auth/refresh`, {}, config);
     const newToken = refreshResponse.data.token;
     
     console.log('✅ Token refresh successful');
@@ -84,13 +85,13 @@ const testTokenManagement = async () => {
     };
     
     // Logout to blacklist token
-    const logoutResponse = await axios.post(`${baseURL}/auth/logout`, {}, config);
+    const logoutResponse = await api.post(`${baseURL}/auth/logout`, {}, config);
     console.log('✅ Logout successful');
     console.log(`Message: ${logoutResponse.data.message}`);
     
     // Try to use the blacklisted token
     try {
-      await axios.get(`${baseURL}/auth`, config);
+      await api.get(`${baseURL}/auth`, config);
       console.log('❌ Blacklisted token was still accepted (this should not happen)');
     } catch (blacklistError) {
       console.log('✅ Blacklisted token properly rejected');

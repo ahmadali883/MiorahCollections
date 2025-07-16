@@ -1,4 +1,5 @@
 const axios = require('axios');
+const api = require('../client/src/config/api');
 
 // Test cart synchronization functionality
 const testCartSynchronization = async () => {
@@ -19,7 +20,7 @@ const testCartSynchronization = async () => {
       password: '112233'
     };
     
-    const loginResponse = await axios.post(`${baseURL}/auth`, loginData);
+    const loginResponse = await api.post(`${baseURL}/auth`, loginData);
     authToken = loginResponse.data.token;
     userId = loginResponse.data.user._id;
     
@@ -32,7 +33,7 @@ const testCartSynchronization = async () => {
   
   // Get a test product
   try {
-    const productsResponse = await axios.get(`${baseURL}/products`);
+    const productsResponse = await api.get(`${baseURL}/products`);
     if (productsResponse.data.length > 0) {
       testProductId = productsResponse.data[0]._id;
       console.log(`✅ Test product found: ${testProductId}`);
@@ -65,7 +66,7 @@ const testCartSynchronization = async () => {
       { id: '', quantity: 1, itemTotal: 50 } // Empty ID
     ];
     
-    const response = await axios.put(`${baseURL}/cart/${userId}`, {
+    const response = await api.put(`${baseURL}/cart/${userId}`, {
       products: invalidCartData
     }, config);
     
@@ -103,7 +104,7 @@ const testCartSynchronization = async () => {
     };
     
     // Clear existing cart first
-    await axios.put(`${baseURL}/cart/${userId}`, { products: [] }, config);
+    await api.put(`${baseURL}/cart/${userId}`, { products: [] }, config);
     
     // Add an item to user cart
     const userCartItem = {
@@ -113,7 +114,7 @@ const testCartSynchronization = async () => {
       itemTotal: 100
     };
     
-    await axios.put(`${baseURL}/cart/${userId}`, { 
+    await api.put(`${baseURL}/cart/${userId}`, { 
       products: [userCartItem] 
     }, config);
     
@@ -130,11 +131,11 @@ const testCartSynchronization = async () => {
       }
     ];
     
-    await axios.put(`${baseURL}/cart/${userId}`, { 
+    await api.put(`${baseURL}/cart/${userId}`, { 
       products: mergedItems 
     }, config);
     
-    const cartResponse = await axios.get(`${baseURL}/cart/${userId}`, config);
+    const cartResponse = await api.get(`${baseURL}/cart/${userId}`, config);
     const finalQuantity = cartResponse.data.products[0]?.quantity || 0;
     
     console.log('✅ Cart merging simulation successful');
@@ -180,7 +181,7 @@ const testCartSynchronization = async () => {
     // Simulate background sync (this happens after optimistic update)
     setTimeout(async () => {
       try {
-        await axios.put(`${baseURL}/cart/${userId}`, { 
+        await api.put(`${baseURL}/cart/${userId}`, { 
           products: optimisticCartState 
         }, config);
         
@@ -230,7 +231,7 @@ const testCartSynchronization = async () => {
       }
     ];
     
-    const response = await axios.put(`${baseURL}/cart/${userId}`, {
+    const response = await api.put(`${baseURL}/cart/${userId}`, {
       products: mixedCartData
     }, config);
     
@@ -268,7 +269,7 @@ const testCartSynchronization = async () => {
       itemTotal: 15000
     };
     
-    const response = await axios.put(`${baseURL}/cart/${userId}`, {
+    const response = await api.put(`${baseURL}/cart/${userId}`, {
       products: [maxQuantityItem]
     }, config);
     
@@ -298,7 +299,7 @@ const testCartSynchronization = async () => {
       }
     };
     
-    await axios.put(`${baseURL}/cart/${userId}`, { products: [] }, config);
+    await api.put(`${baseURL}/cart/${userId}`, { products: [] }, config);
     console.log('✅ Test cart cleared');
   } catch (error) {
     console.log('⚠️ Failed to clear test cart');

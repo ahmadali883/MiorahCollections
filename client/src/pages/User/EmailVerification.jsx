@@ -42,7 +42,8 @@ const EmailVerification = () => {
     try {
       setVerificationState(prev => ({ ...prev, loading: true }));
       
-      const response = await axios.post('/auth/verify-email', {
+      // const response = await axios.post('/auth/verify-email', {
+      const response = await api.post('/auth/verify-email', {
         token: verificationToken
       });
       
@@ -99,7 +100,8 @@ const EmailVerification = () => {
     try {
       setResendState(prev => ({ ...prev, loading: true, error: null }));
       
-      const response = await axios.post('/auth/resend-verification', {
+      // const response = await axios.post('/auth/resend-verification', {
+      const response = await api.post('/auth/resend-verification', {
         email: userEmail
       });
       

@@ -1,37 +1,56 @@
 import axios from 'axios';
-import config from './config';
 
-// Create axios instance with base configuration
+// const apiUrl = import.meta.env.REACT_APP_API_BASE_URL || 'http://localhost:5000/api';
+const apiUrl = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000/api';
+
 const api = axios.create({
-  baseURL: config.API_BASE_URL,
-  timeout: 10000,
-  headers: {
-    'Content-Type': 'application/json',
-  },
+    baseURL: apiUrl,
+    headers: { 'Content-Type': 'application/json' },
 });
 
-// Add request interceptor for logging
+// Request interceptor to add token
 api.interceptors.request.use(
-  (config) => {
-    console.log('API Request:', config.method?.toUpperCase(), config.url);
-    return config;
-  },
-  (error) => {
-    console.error('API Request Error:', error);
-    return Promise.reject(error);
-  }
+    (config) => {
+        const token = localStorage.getItem('accessToken');
+        if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
+        }
+        return config;
+    },
+    (error) => Promise.reject(error)
 );
 
-// Add response interceptor for error handling
+// Response interceptor for token refresh
 api.interceptors.response.use(
-  (response) => {
-    return response;
-  },
-  (error) => {
-    console.error('API Response Error:', error.response?.data || error.message);
-    return Promise.reject(error);
-  }
+    (response) => response,
+    async (error) => {
+        const originalRequest = error.config;
+        if (error.response.status === 401 && !originalRequest._retry) {
+            originalRequest._retry = true;
+            const refreshSuccess = await refreshToken();
+            if (refreshSuccess) {
+                return api(originalRequest);
+            }
+        }
+        return Promise.reject(error);
+    }
 );
+
+// Dummy refreshToken function (replace with actual context call)
+async function refreshToken() {
+    const refresh = localStorage.getItem('refreshToken');
+    if (refresh) {
+        try {
+            const response = await axios.post(`${apiUrl}/auth/token/refresh/`, {
+                refresh,
+            });
+            localStorage.setItem('accessToken', response.data.access);
+            return true;
+        } catch {
+            return false;
+        }
+    }
+    return false;
+}
 
 export default api;
-

@@ -94,7 +94,8 @@ const Login = () => {
     try {
       setResendState(prev => ({ ...prev, loading: true, error: null }));
       
-      const response = await axios.post('/auth/resend-verification', {
+      // const response = await axios.post('/auth/resend-verification', {
+      const resendResponse = await api.post('/auth/resend-verification', {
         email: emailVerificationError.email
       });
       

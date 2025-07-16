@@ -1,5 +1,6 @@
 import { createAsyncThunk, createSlice, } from "@reduxjs/toolkit";
 import axios from "../../utils/axiosConfig";
+import api from "../../config/api";
 
 export const registerUser = createAsyncThunk("auth/registerUser", async ({ firstname, lastname, username, email, password }, { rejectWithValue }) => {
   try {
@@ -9,7 +10,7 @@ export const registerUser = createAsyncThunk("auth/registerUser", async ({ first
       },
     }
     
-    let res = await axios.post("/users", { firstname, lastname, username, email, password }, config)
+    let res = await api.post("/users", { firstname, lastname, username, email, password }, config)
     let data = res.data
     return data
 
@@ -38,7 +39,7 @@ export const loginUser = createAsyncThunk("auth/loginUser", async ({ email, pass
       },
     }
     
-    let res = await axios.post("/auth", { email, password }, config)
+    let res = await api.post("/auth", { email, password }, config)
     let data = res.data
 
     // Store token and user info with timestamp
@@ -80,7 +81,9 @@ export const getUserDetails = createAsyncThunk('user/getUserDetails', async (arg
         'x-auth-token': auth.userToken,
       },
     }
-    const { data } = await axios.get(`/auth`, config)
+    // const { data } = await axios.get(`/auth`, config)
+    const { data } = await api.get(`/auth`, config)
+
     return data
 
   } catch (err) {
@@ -121,7 +124,8 @@ export const updateUser = createAsyncThunk('user/updateUser', async ({ userData,
         'x-auth-token': auth.userToken,
       },
     }
-    const { data } = await axios.put(`/users/${_id}`, userData, config)
+    // const { data } = await axios.put(`/users/${_id}`, userData, config)
+    const { data } = await api.put(`/users/${_id}`, userData, config)
     return data
 
   } catch (err) {
@@ -148,7 +152,7 @@ export const refreshToken = createAsyncThunk(
       };
       
       // Call the refresh endpoint (we'll need to create this)
-      const { data } = await axios.post('/auth/refresh', {}, config);
+      const { data } = await api.post('/auth/refresh', {}, config);
       
       // Store new token with timestamp
       localStorage.setItem('userToken', data.token);
@@ -198,7 +202,7 @@ export const loadUserFromStorage = createAsyncThunk(
       if (hoursOld > 23) {
         // Try to refresh token first
         try {
-          const refreshResult = await axios.post('/auth/refresh', {}, {
+          const refreshResult = await api.post('/auth/refresh', {}, {
             headers: { 'x-auth-token': auth.userToken }
           });
           
@@ -207,9 +211,13 @@ export const loadUserFromStorage = createAsyncThunk(
           localStorage.setItem('tokenTimestamp', Date.now().toString());
           
           // Get user details with new token
-          const userResult = await axios.get('/auth', {
+          // const userResult = await axios.get('/auth', {
+          //   headers: { 'x-auth-token': refreshResult.data.token }
+          // });
+          const userResult = await api.get('/auth', {
             headers: { 'x-auth-token': refreshResult.data.token }
           });
+          
           
           localStorage.setItem('userInfo', JSON.stringify(userResult.data));
           return { ...userResult.data, token: refreshResult.data.token };
@@ -224,7 +232,8 @@ export const loadUserFromStorage = createAsyncThunk(
         },
       };
       
-      const { data } = await axios.get('/auth', config);
+      // const { data } = await axios.get('/auth', config);
+      const { data } = await api.get('/auth', config);
       // Store updated user info
       localStorage.setItem('userInfo', JSON.stringify(data));
       return data;
@@ -303,7 +312,7 @@ export const logoutUser = createAsyncThunk(
         };
         
         // Call logout endpoint to invalidate token server-side
-        await axios.post('/auth/logout', {}, config);
+        await api.post('/auth/logout', {}, config);
       }
       
       // Clear local storage

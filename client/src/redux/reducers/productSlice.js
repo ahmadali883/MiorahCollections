@@ -1,10 +1,12 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
 import axios from '../../utils/axiosConfig';
 
+import api from '../../config/api';
+
 export const getAllProducts = createAsyncThunk(
   'product/getAllProducts',
   async (thunkAPI) => {
-    let res = await axios.get('/products/')
+    let res = await api.get('/products/')
     let products = res.data
     return products
   })
@@ -12,7 +14,7 @@ export const getAllProducts = createAsyncThunk(
 export const getProductsByCollection = createAsyncThunk(
   'product/getProductsByCollection',
   async (collection, thunkAPI) => {
-    let res = await axios.get(`/products/?category=${collection}`)
+    let res = await api.get(`/products/?category=${collection}`)
     let productsCollection = res.data
     return productsCollection
   })
@@ -20,7 +22,7 @@ export const getProductsByCollection = createAsyncThunk(
 export const getCategories = createAsyncThunk(
   'product/getCategories',
   async (thunkAPI) => {
-    let res = await axios.get('/categories/')
+    let res = await api.get('/categories/')
     return res.data
   })
 
@@ -39,7 +41,7 @@ export const getAdminProducts = createAsyncThunk('product/getAdminProducts', asy
     }
 
     const queryParams = new URLSearchParams(params).toString()
-    let { data } = await axios.get(`/products/admin/all?${queryParams}`, config)
+    let { data } = await api.get(`/products/admin/all?${queryParams}`, config)
     return data
 
   } catch (err) {
@@ -60,7 +62,7 @@ export const updateProduct = createAsyncThunk('product/updateProduct', async ({ 
       },
     }
 
-    let { data } = await axios.put(`/products/${productId}`, productData, config)
+    let { data } = await api.put(`/products/${productId}`, productData, config)
     return data
 
   } catch (err) {
@@ -81,7 +83,7 @@ export const deleteProduct = createAsyncThunk('product/deleteProduct', async (pr
       },
     }
 
-    let { data } = await axios.delete(`/products/${productId}`, config)
+    let { data } = await api.delete(`/products/${productId}`, config)
     return { productId, message: data.msg }
 
   } catch (err) {
@@ -102,7 +104,7 @@ export const getLowStockProducts = createAsyncThunk('product/getLowStockProducts
       },
     }
 
-    let { data } = await axios.get(`/products/inventory/low-stock?threshold=${threshold}`, config)
+    let { data } = await api.get(`/products/inventory/low-stock?threshold=${threshold}`, config)
     return data
 
   } catch (err) {
@@ -123,7 +125,7 @@ export const getInventoryStats = createAsyncThunk('product/getInventoryStats', a
       },
     }
 
-    let { data } = await axios.get('/products/inventory/stats', config)
+    let { data } = await api.get('/products/inventory/stats', config)
     return data
 
   } catch (err) {
@@ -144,7 +146,7 @@ export const bulkUpdateProducts = createAsyncThunk('product/bulkUpdateProducts',
       },
     }
 
-    let { data } = await axios.put('/products/inventory/bulk-update', { productIds, updates, operation }, config)
+    let { data } = await api.put('/products/inventory/bulk-update', { productIds, updates, operation }, config)
     return data
 
   } catch (err) {

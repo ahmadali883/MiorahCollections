@@ -25,7 +25,8 @@ const useAvailabilityCheck = () => {
 
       try {
         const requestData = { [field]: value };
-        const response = await axios.post('/auth/check-availability', requestData);
+        // const response = await axios.post('/auth/check-availability', requestData);
+        const response = await api.post('/auth/check-availability', requestData);
         
         if (response.data.field === field && !response.data.available) {
           setAvailability(prev => ({

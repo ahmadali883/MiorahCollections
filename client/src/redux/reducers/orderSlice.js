@@ -1,5 +1,6 @@
 import { createAsyncThunk, createSlice, } from "@reduxjs/toolkit";
 import axios from "../../utils/axiosConfig";
+import api from "../../config/api";
 
 export const getUserOrder = createAsyncThunk('order/getUserOrder', async ({ user }, { rejectWithValue }) => {
   try {
@@ -14,7 +15,7 @@ export const getUserOrder = createAsyncThunk('order/getUserOrder', async ({ user
       },
     }
 
-    let { data } = await axios.get(`/orders/${user}`, config)
+    let { data } = await api.get(`/orders/${user}`, config)
     return data
 
   } catch (err) {
@@ -37,7 +38,7 @@ export const getAdminOrders = createAsyncThunk('order/getAdminOrders', async (pa
     }
 
     const queryParams = new URLSearchParams(params).toString()
-    let { data } = await axios.get(`/orders/admin?${queryParams}`, config)
+    let { data } = await api.get(`/orders/admin?${queryParams}`, config)
     return data
 
   } catch (err) {
@@ -58,7 +59,7 @@ export const getOrderDetails = createAsyncThunk('order/getOrderDetails', async (
       },
     }
 
-    let { data } = await axios.get(`/orders/admin/${orderId}`, config)
+    let { data } = await api.get(`/orders/admin/${orderId}`, config)
     return data
 
   } catch (err) {
@@ -79,7 +80,7 @@ export const updateOrderStatus = createAsyncThunk('order/updateOrderStatus', asy
       },
     }
 
-    let { data } = await axios.put(`/orders/admin/${orderId}/status`, { status }, config)
+    let { data } = await api.put(`/orders/admin/${orderId}/status`, { status }, config)
     return data
 
   } catch (err) {
@@ -100,7 +101,7 @@ export const getOrderStats = createAsyncThunk('order/getOrderStats', async (_, {
       },
     }
 
-    let { data } = await axios.get('/orders/admin/stats', config)
+    let { data } = await api.get('/orders/admin/stats', config)
     return data
 
   } catch (err) {
@@ -121,19 +122,19 @@ export const createOrder = createAsyncThunk('order/createOrder', async (orderDat
       },
     }
     
-    let res = await axios.get(`/orders/${orderData.user}`, config)
+    let res = await api.get(`/orders/${orderData.user}`, config)
 
 
     // PREVENT DUPLICATED ORDER
     if (res.data.filter(item => item.paymentID === orderData.paymentID).length > 0) {
       // ORDER ALREADY MADE
     } else {
-      await axios.post(`/orders/`,
+      await api.post(`/orders/`,
         (orderData)
         , config)
     }
 
-    let { data } = await axios.get(`/orders/${orderData.user}`, config)
+    let { data } = await api.get(`/orders/${orderData.user}`, config)
     return data
 
   } catch (err) {
@@ -151,7 +152,7 @@ export const createGuestOrder = createAsyncThunk('order/createGuestOrder', async
     }
     
     // For guest orders, just create the order without checking for duplicates
-    let res = await axios.post('/orders/guest', orderData, config)
+    let res = await api.post('/orders/guest', orderData, config)
     return res.data
 
   } catch (err) {

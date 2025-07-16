@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from '../../utils/axiosConfig';
 import { useSelector } from 'react-redux';
+import api from '../../config/api';
 
 const AdminManager = () => {
   const [users, setUsers] = useState([]);
@@ -24,7 +25,10 @@ const AdminManager = () => {
         }
       };
       
-      const res = await axios.get('/users', config);
+      // const res = await axios.get('/users', config);
+
+      const res = await api.get('/users', config);
+
       setUsers(res.data);
       setMessage({ type: 'success', text: 'Users loaded successfully' });
     } catch (err) {
