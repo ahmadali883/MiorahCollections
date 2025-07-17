@@ -7,6 +7,7 @@ import { loginUser, removeError } from "../../redux/reducers/authSlice";
 import { useNavigate, useLocation } from "react-router-dom";
 import ErrorDisplay from "../../components/ErrorDisplay";
 import axios from "../../utils/axiosConfig";
+import api from "../../config/api";
 
 const Login = () => {
   document.title = "Login Page";

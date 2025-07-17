@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from '../../utils/axiosConfig';
 import { useSelector } from 'react-redux';
+import api from '../../config/api';
 
 const CategoryForm = () => {
   const [categories, setCategories] = useState([]);

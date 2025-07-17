@@ -4,6 +4,7 @@ import { NavLink, useParams, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import axios from "../../utils/axiosConfig";
 import ErrorDisplay from "../../components/ErrorDisplay";
+import api from "../../config/api";
 
 const ResetPassword = () => {
   document.title = "Reset Password";

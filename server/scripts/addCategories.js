@@ -1,6 +1,6 @@
 const axios = require('axios');
 const readline = require('readline');
-const api = require('../client/src/config/api');
+const api = require('../config/api');
 
 const rl = readline.createInterface({
   input: process.stdin,

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import axios from '../utils/axiosConfig';
+import api from '../config/api';
 
 const useAvailabilityCheck = () => {
   const [availability, setAvailability] = useState({

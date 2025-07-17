@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import axios from '../../utils/axiosConfig';
 import Loading from '../../components/Loading';
+import api from '../../config/api';
 
 const EmailVerification = () => {
   const { token } = useParams();
