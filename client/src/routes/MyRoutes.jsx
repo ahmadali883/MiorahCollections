@@ -36,6 +36,7 @@ const MyRoutes = () => {
         <Route path="/products" element={<Products />} />
         <Route path="/products/:id" element={<ProductPage />} />
         <Route path="/collections" element={<Collections />} />
+        <Route path="/categories" element={<Categories />} />
         <Route path="/collections/:category" element={<Categories />} />
         <Route path="/about" element={<About />} />
         <Route path="/contact" element={<Contact />} />
