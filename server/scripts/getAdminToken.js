@@ -13,7 +13,7 @@ const getAdminToken = async () => {
     rl.question('Enter admin email: ', async (email) => {
       rl.question('Enter admin password: ', async (password) => {
         try {
-          const response = await api.post('http://localhost:5000/api/auth', {
+          const response = await api.post(`${process.env.SERVER_BASE_URL || 'https://miorah-collections-server.vercel.app'}/api/auth`, {
             email,
             password
           });

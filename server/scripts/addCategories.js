@@ -37,7 +37,7 @@ const categories = [
 const addCategories = async (adminToken) => {
   try {
     for (const category of categories) {
-      const response = await api.post('http://localhost:5000/api/categories', category, {
+      const response = await api.post(`${process.env.SERVER_BASE_URL || 'https://miorah-collections-server.vercel.app'}/api/categories`, category, {
         headers: {
           'Content-Type': 'application/json',
           'x-auth-token': adminToken
