@@ -131,7 +131,7 @@ router.post(
       // Send email verification
       try {
         const emailService = require('../utils/emailService');
-        const verificationUrl = `${process.env.CLIENT_URL || 'http://localhost:3000'}/verify-email/${verificationToken}`;
+        const verificationUrl = `${process.env.FRONTEND_URL || 'https://miorah-collections-l11t.vercel.app'}/verify-email/${verificationToken}`;
         
         await emailService.sendEmailVerificationEmail(user.email, user.firstname, verificationUrl, verificationToken);
         

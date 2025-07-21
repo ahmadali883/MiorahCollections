@@ -43,7 +43,7 @@ const securityHeaders = (req, res, next) => {
 const corsConfig = (req, res, next) => {
   const allowedOrigins = [
     'http://localhost:3000',
-    'https://yourdomain.com',
+    'https://miorah-collections-l11t.vercel.app',
     // Add your production domains here
   ];
 
