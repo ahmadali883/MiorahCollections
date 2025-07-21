@@ -17,7 +17,7 @@ connectDB();
 // CORS configuration
 const corsOptions = {
   origin: process.env.NODE_ENV === 'production' 
-    ? process.env.FRONTEND_URL || 'https://your-production-domain.com'
+    ? [process.env.FRONTEND_URL || 'https://your-production-domain.com', 'https://miorah-collections-l11t.vercel.app']
     : 'http://localhost:3000', // React development server
   credentials: true,
   optionsSuccessStatus: 200
