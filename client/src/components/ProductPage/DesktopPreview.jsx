@@ -1,6 +1,9 @@
 import { useDispatch, useSelector } from "react-redux";
 import { changeImage } from "../../redux/reducers/productSlice";
 
+
+const IMAGE_BASE_URL = process.env.REACT_APP_API_BASE_URL.replace('/api', '');
+
 const DesktopPreview = () => {
   const dispatch = useDispatch();
   const curIndex = useSelector((state) => state.product.curIndex);
@@ -11,7 +14,11 @@ const DesktopPreview = () => {
       <div className="preview xl:min-w-md max-w-3xl w-[448px] h-[448px] cursor-pointer bg-grayish-blue rounded-2xl mx-auto">
         {images && images.length > 0 ? (
           <img
-            src={images[curIndex]?.image_url}
+            src={
+              images[curIndex]?.image_url?.startsWith('/uploads/')
+                ? `${IMAGE_BASE_URL}${images[curIndex]?.image_url}`
+                : `${IMAGE_BASE_URL}/uploads/products/${images[curIndex]?.image_url}`
+            }
             alt="product-preview"
             className="rounded-2xl transition duration-150 ease-in-out w-full h-full object-cover object-center"
             data-bs-toggle="modal"
@@ -42,7 +49,11 @@ const DesktopPreview = () => {
                   "w-full h-full hover:opacity-80 object-cover" +
                   (curIndex === index ? " opacity-50" : "")
                 }
-                src={img.image_url}
+                src={
+                  img.image_url?.startsWith('/uploads/')
+                    ? `${IMAGE_BASE_URL}${img.image_url}`
+                    : `${IMAGE_BASE_URL}/uploads/products/${img.image_url}`
+                }
                 alt={`thumbnail ${index + 1}`}
               />
               {img.is_primary && (

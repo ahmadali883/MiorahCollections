@@ -799,7 +799,11 @@ const Checkout = () => {
                     >
                       {item.product.images && item.product.images.length > 0 ? (
                         <img
-                          src={item.product.images[0].image_url}
+                          src={
+                            item.product.images[0].image_url?.startsWith('/uploads/')
+                              ? process.env.REACT_APP_API_BASE_URL.replace('/api', '') + item.product.images[0].image_url
+                              : process.env.REACT_APP_API_BASE_URL.replace('/api', '') + '/uploads/products/' + item.product.images[0].image_url
+                          }
                           alt="product-img"
                           className="w-14 h-14 rounded-lg object-cover"
                         />

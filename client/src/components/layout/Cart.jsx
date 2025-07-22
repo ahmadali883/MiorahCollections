@@ -1,4 +1,5 @@
 import React from "react";
+const IMAGE_BASE_URL = process.env.REACT_APP_API_BASE_URL.replace('/api', '');
 import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import { 
@@ -169,7 +170,13 @@ const Cart = () => {
                       {/* Product Image */}
                       <div className="flex-shrink-0">
                         <img
-                          src={item.product?.images?.[0]?.image_url || '/placeholder-image.jpg'}
+                          src={
+                            item.product?.images?.[0]?.image_url
+                              ? (item.product.images[0].image_url.startsWith('/uploads/')
+                                  ? `${IMAGE_BASE_URL}${item.product.images[0].image_url}`
+                                  : `${IMAGE_BASE_URL}/uploads/products/${item.product.images[0].image_url}`)
+                              : '/placeholder-image.jpg'
+                          }
                           alt={item.product?.name || 'Product'}
                           className="w-16 h-16 object-cover rounded-md border border-gray-200"
                           onError={(e) => {

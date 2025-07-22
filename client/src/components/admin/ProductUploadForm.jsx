@@ -25,7 +25,7 @@ const ProductUploadForm = () => {
     // Load categories
     const fetchCategories = async () => {
       try {
-        const res = await axios.get('/categories');
+        const res = await axios.get('/api/categories');
         setCategories(res.data);
       } catch (err) {
         console.error('Error fetching categories', err);

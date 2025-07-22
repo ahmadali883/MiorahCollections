@@ -6,6 +6,7 @@ const MobileSlider = () => {
   const images = useSelector((state) => state.product.images);
   const slideIndex = useSelector((state) => state.product.slideIndex);
 
+  const IMAGE_BASE_URL = process.env.REACT_APP_API_BASE_URL.replace('/api', '');
   return (
     <div className="slider overflow-hidden relative mt-1 bg-grayish-blue">
       <div
@@ -13,11 +14,15 @@ const MobileSlider = () => {
         style={{ transform: `translateX(-${100 * slideIndex}%)` }}
       >
         {images && images.length > 0 ? (
-          images.map((image, index) => (
+          images.map((img, index) => (
             <img
               className="object-cover"
               key={index}
-              src={image.image_url}
+              src={
+                img.image_url?.startsWith('/uploads/')
+                  ? `${IMAGE_BASE_URL}${img.image_url}`
+                  : `${IMAGE_BASE_URL}/uploads/products/${img.image_url}`
+              }
               alt={`Product view ${index + 1}`}
             />
           ))

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+const IMAGE_BASE_URL = process.env.REACT_APP_API_BASE_URL.replace('/api', '');
 import { useDispatch, useSelector } from 'react-redux';
 import { 
   getAdminProducts, 
@@ -415,7 +416,11 @@ const InventoryManager = () => {
                       {product.images && product.images.length > 0 ? (
                         <img
                           className="h-10 w-10 rounded-md object-cover mr-3"
-                          src={product.images[0].image_url}
+                          src={
+                            product.images[0].image_url?.startsWith('/uploads/')
+                              ? `${IMAGE_BASE_URL}${product.images[0].image_url}`
+                              : `${IMAGE_BASE_URL}/uploads/products/${product.images[0].image_url}`
+                          }
                           alt={product.name}
                         />
                       ) : (
