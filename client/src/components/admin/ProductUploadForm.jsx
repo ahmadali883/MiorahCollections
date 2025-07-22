@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import axios from '../../utils/axiosConfig';
-import { useSelector } from 'react-redux';
-
+import { useSelector, useDispatch } from 'react-redux';
+import { getCategories } from '../../redux/reducers/productSlice';
+import api from '../../config/api';
 const ProductUploadForm = () => {
-  const [categories, setCategories] = useState([]);
+  const dispatch = useDispatch();
+  const categories = useSelector(state => state.product.categories);
   const [formData, setFormData] = useState({
     name: '',
     category_id: '',
@@ -22,19 +23,10 @@ const ProductUploadForm = () => {
   const { userToken } = useSelector(state => state.auth);
 
   useEffect(() => {
-    // Load categories
-    const fetchCategories = async () => {
-      try {
-        const res = await axios.get('/api/categories');
-        setCategories(res.data);
-      } catch (err) {
-        console.error('Error fetching categories', err);
-        setMessage({ type: 'error', text: 'Failed to load categories' });
-      }
-    };
-
-    fetchCategories();
-  }, []);
+    if (!categories || categories.length === 0) {
+      dispatch(getCategories());
+    }
+  }, [dispatch, categories]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -81,7 +73,7 @@ const ProductUploadForm = () => {
         }
       };
       
-      const res = await axios.post('/products/upload', productFormData, config);
+      const res = await api.post('/products/upload', productFormData, config);
       
       setMessage({ 
         type: 'success', 
