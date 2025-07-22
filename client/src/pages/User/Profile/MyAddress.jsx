@@ -7,7 +7,7 @@ import {
   updateFormDisplay,
 } from "../../../redux/reducers/addressSlice";
 import AddressForm from "./AddressForm";
-import { motion, AnimatePresence } from "framer-motion"
+import { motion, AnimatePresence } from "framer-motion";
 
 const MyAddress = () => {
   document.title = "My Address"

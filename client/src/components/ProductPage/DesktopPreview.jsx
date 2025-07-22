@@ -1,7 +1,6 @@
 import { useDispatch, useSelector } from "react-redux";
 import { changeImage } from "../../redux/reducers/productSlice";
 
-
 const IMAGE_BASE_URL = process.env.REACT_APP_API_BASE_URL.replace('/api', '');
 
 const DesktopPreview = () => {

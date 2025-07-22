@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Link } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion"
+import { motion, AnimatePresence } from "framer-motion";
 
 const IMAGE_BASE_URL = process.env.REACT_APP_API_BASE_URL.replace('/api', '');
 
