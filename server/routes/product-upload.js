@@ -14,13 +14,52 @@ if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
 
+// Multer error handling middleware
+const handleMulterError = (req, res, next) => {
+  const uploadMiddleware = upload.array('product_images', 10);
+  
+  uploadMiddleware(req, res, (err) => {
+    if (err) {
+      console.error('Multer error:', err);
+      
+      if (err.code === 'LIMIT_FILE_SIZE') {
+        return res.status(400).json({ 
+          msg: 'File size too large. Maximum allowed size is 15MB per file.',
+          error: 'FILE_TOO_LARGE'
+        });
+      }
+      
+      if (err.code === 'LIMIT_FILE_COUNT') {
+        return res.status(400).json({ 
+          msg: 'Too many files. Maximum allowed is 10 files.',
+          error: 'TOO_MANY_FILES'
+        });
+      }
+      
+      if (err.message === 'Only JPG, PNG and WEBP images are allowed') {
+        return res.status(400).json({ 
+          msg: 'Invalid file type. Only JPG, PNG and WEBP images are allowed.',
+          error: 'INVALID_FILE_TYPE'
+        });
+      }
+      
+      return res.status(400).json({ 
+        msg: 'File upload error: ' + err.message,
+        error: 'UPLOAD_ERROR'
+      });
+    }
+    
+    next();
+  });
+};
+
 // @ route POST api/products/upload
 // @ desc Create product with image upload
 // @ access Private (Admin only)
 router.post(
   "/upload",
   verifyTokenAndAdmin,
-  upload.array('product_images', 10), // Accept up to 10 images
+  handleMulterError, // Use our error handling wrapper
   [
     body("name", "Please enter a product name").not().isEmpty(),
     body("category_id", "Please select a category").not().isEmpty(),
@@ -95,7 +134,7 @@ router.post(
 router.put(
   "/:id/upload",
   verifyTokenAndAdmin,
-  upload.array('product_images', 10),
+  handleMulterError, // Use our error handling wrapper
   async (req, res) => {
     try {
       const product = await Product.findById(req.params.id);

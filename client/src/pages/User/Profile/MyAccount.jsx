@@ -14,6 +14,7 @@ const MyAccount = () => {
       <hr className="border-b border-grayish-blue mt-3 mb-8" />
       <dl className="grid grid-cols-1 gap-x-4 sm:grid-cols-1 divide-y divide-gray-200">
         <motion.div
+          key="fullname"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.2 }}
@@ -29,6 +30,7 @@ const MyAccount = () => {
           </dd>
         </motion.div>
         <motion.div
+          key="email"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.4 }}
@@ -41,8 +43,9 @@ const MyAccount = () => {
             {userInfo.email}
           </dd>
         </motion.div>
-        {userInfo.phone ? (
+        {userInfo.phone && (
           <motion.div
+            key="phone"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.6 }}
@@ -55,11 +58,10 @@ const MyAccount = () => {
               {userInfo.phone}
             </dd>
           </motion.div>
-        ) : (
-          ""
         )}
-        {userInfo.gender ? (
+        {userInfo.gender && (
           <motion.div
+            key="gender"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.8 }}
@@ -72,8 +74,6 @@ const MyAccount = () => {
               {userInfo.gender}
             </dd>
           </motion.div>
-        ) : (
-          ""
         )}
       </dl>
     </AnimatePresence>

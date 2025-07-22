@@ -31,7 +31,12 @@ function App() {
 
   return (
     <ErrorBoundary>
-      <BrowserRouter>
+      <BrowserRouter
+        future={{
+          v7_startTransition: true,
+          v7_relativeSplatPath: true
+        }}
+      >
         <div className="App font-kumbh-sans w-full min-h-screen relative overflow-hidden">
           <SessionManager />
           <MyRoutes />

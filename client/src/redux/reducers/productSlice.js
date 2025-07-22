@@ -324,147 +324,157 @@ const productSlice = createSlice({
       }
     }
   },
-  extraReducers: {
-    [getAllProducts.pending]: (state) => {
-      state.loading = true
-    },
-    [getAllProducts.fulfilled]: (state, { payload }) => {
-      state.loading = false
-      state.products = payload
-      state.containFilters = state.products.map(item => true)
-      state.lastRefresh = Date.now() // Update last refresh timestamp
-    },
-    [getAllProducts.rejected]: (state, action) => {
-      state.loading = false
-      state.error = true
-      state.errMsg = action.error.message
-    },
-    [getProductsByCollection.pending]: (state) => {
-      state.loading = true
-    },
-    [getProductsByCollection.fulfilled]: (state, { payload, meta, collection }) => {
-      state.loading = false
-      state.collection = payload
-    },
-    [getProductsByCollection.rejected]: (state, action) => {
-      state.loading = false
-      state.error = true
-      state.errMsg = action.error.message
-    },
-    [getCategories.pending]: (state) => {
-      state.loading = true
-    },
-    [getCategories.fulfilled]: (state, { payload }) => {
-      state.loading = false
-      state.categories = payload
-      state.lastRefresh = Date.now() // Update last refresh timestamp
-    },
-    [getCategories.rejected]: (state, action) => {
-      state.loading = false
-      state.error = true
-      state.errMsg = action.error.message
-    },
-    // Inventory Management Extra Reducers
-    [getAdminProducts.pending]: (state) => {
-      state.inventoryLoading = true
-      state.inventoryError = false
-    },
-    [getAdminProducts.fulfilled]: (state, { payload }) => {
-      state.inventoryLoading = false
-      state.adminProducts = payload.products
-      state.productsPagination = payload.pagination
-      state.inventoryErrorMsg = ''
-    },
-    [getAdminProducts.rejected]: (state, { payload }) => {
-      state.inventoryLoading = false
-      state.inventoryError = true
-      state.inventoryErrorMsg = payload.msg || payload
-    },
-    [updateProduct.pending]: (state) => {
-      state.inventoryLoading = true
-      state.inventoryError = false
-    },
-    [updateProduct.fulfilled]: (state, { payload }) => {
-      state.inventoryLoading = false
-      // Update the product in the admin products list
-      const productIndex = state.adminProducts.findIndex(product => product._id === payload._id)
-      if (productIndex !== -1) {
-        state.adminProducts[productIndex] = payload
-      }
-      // Also update in regular products if it exists
-      const regularProductIndex = state.products.findIndex(product => product._id === payload._id)
-      if (regularProductIndex !== -1) {
-        state.products[regularProductIndex] = payload
-      }
-      state.inventoryErrorMsg = ''
-    },
-    [updateProduct.rejected]: (state, { payload }) => {
-      state.inventoryLoading = false
-      state.inventoryError = true
-      state.inventoryErrorMsg = payload.msg || payload
-    },
-    [deleteProduct.pending]: (state) => {
-      state.inventoryLoading = true
-      state.inventoryError = false
-    },
-    [deleteProduct.fulfilled]: (state, { payload }) => {
-      state.inventoryLoading = false
-      // Remove from admin products
-      state.adminProducts = state.adminProducts.filter(product => product._id !== payload.productId)
-      // Update in regular products (mark as inactive)
-      const regularProductIndex = state.products.findIndex(product => product._id === payload.productId)
-      if (regularProductIndex !== -1) {
-        state.products[regularProductIndex].is_active = false
-      }
-      state.inventoryErrorMsg = ''
-    },
-    [deleteProduct.rejected]: (state, { payload }) => {
-      state.inventoryLoading = false
-      state.inventoryError = true
-      state.inventoryErrorMsg = payload.msg || payload
-    },
-    [getLowStockProducts.pending]: (state) => {
-      state.inventoryLoading = true
-      state.inventoryError = false
-    },
-    [getLowStockProducts.fulfilled]: (state, { payload }) => {
-      state.inventoryLoading = false
-      state.lowStockProducts = payload
-      state.inventoryErrorMsg = ''
-    },
-    [getLowStockProducts.rejected]: (state, { payload }) => {
-      state.inventoryLoading = false
-      state.inventoryError = true
-      state.inventoryErrorMsg = payload.msg || payload
-    },
-    [getInventoryStats.pending]: (state) => {
-      state.inventoryLoading = true
-      state.inventoryError = false
-    },
-    [getInventoryStats.fulfilled]: (state, { payload }) => {
-      state.inventoryLoading = false
-      state.inventoryStats = payload
-      state.inventoryErrorMsg = ''
-    },
-    [getInventoryStats.rejected]: (state, { payload }) => {
-      state.inventoryLoading = false
-      state.inventoryError = true
-      state.inventoryErrorMsg = payload.msg || payload
-    },
-    [bulkUpdateProducts.pending]: (state) => {
-      state.bulkUpdateLoading = true
-      state.inventoryError = false
-    },
-    [bulkUpdateProducts.fulfilled]: (state, { payload }) => {
-      state.bulkUpdateLoading = false
-      state.inventoryErrorMsg = ''
-      // Optionally refresh the admin products list after bulk update
-    },
-    [bulkUpdateProducts.rejected]: (state, { payload }) => {
-      state.bulkUpdateLoading = false
-      state.inventoryError = true
-      state.inventoryErrorMsg = payload.msg || payload
-    }
+  extraReducers: (builder) => {
+    builder
+      // getAllProducts
+      .addCase(getAllProducts.pending, (state) => {
+        state.loading = true
+      })
+      .addCase(getAllProducts.fulfilled, (state, { payload }) => {
+        state.loading = false
+        state.products = payload
+        state.containFilters = state.products.map(item => true)
+        state.lastRefresh = Date.now() // Update last refresh timestamp
+      })
+      .addCase(getAllProducts.rejected, (state, action) => {
+        state.loading = false
+        state.error = true
+        state.errMsg = action.error.message
+      })
+      // getProductsByCollection
+      .addCase(getProductsByCollection.pending, (state) => {
+        state.loading = true
+      })
+      .addCase(getProductsByCollection.fulfilled, (state, { payload }) => {
+        state.loading = false
+        state.collection = payload
+      })
+      .addCase(getProductsByCollection.rejected, (state, action) => {
+        state.loading = false
+        state.error = true
+        state.errMsg = action.error.message
+      })
+      // getCategories
+      .addCase(getCategories.pending, (state) => {
+        state.loading = true
+      })
+      .addCase(getCategories.fulfilled, (state, { payload }) => {
+        state.loading = false
+        state.categories = payload
+        state.lastRefresh = Date.now() // Update last refresh timestamp
+      })
+      .addCase(getCategories.rejected, (state, action) => {
+        state.loading = false
+        state.error = true
+        state.errMsg = action.error.message
+      })
+      // Inventory Management Extra Reducers
+      // getAdminProducts
+      .addCase(getAdminProducts.pending, (state) => {
+        state.inventoryLoading = true
+        state.inventoryError = false
+      })
+      .addCase(getAdminProducts.fulfilled, (state, { payload }) => {
+        state.inventoryLoading = false
+        state.adminProducts = payload.products
+        state.productsPagination = payload.pagination
+        state.inventoryErrorMsg = ''
+      })
+      .addCase(getAdminProducts.rejected, (state, { payload }) => {
+        state.inventoryLoading = false
+        state.inventoryError = true
+        state.inventoryErrorMsg = payload.msg || payload
+      })
+      // updateProduct
+      .addCase(updateProduct.pending, (state) => {
+        state.inventoryLoading = true
+        state.inventoryError = false
+      })
+      .addCase(updateProduct.fulfilled, (state, { payload }) => {
+        state.inventoryLoading = false
+        // Update the product in the admin products list
+        const productIndex = state.adminProducts.findIndex(product => product._id === payload._id)
+        if (productIndex !== -1) {
+          state.adminProducts[productIndex] = payload
+        }
+        // Also update in regular products if it exists
+        const regularProductIndex = state.products.findIndex(product => product._id === payload._id)
+        if (regularProductIndex !== -1) {
+          state.products[regularProductIndex] = payload
+        }
+        state.inventoryErrorMsg = ''
+      })
+      .addCase(updateProduct.rejected, (state, { payload }) => {
+        state.inventoryLoading = false
+        state.inventoryError = true
+        state.inventoryErrorMsg = payload.msg || payload
+      })
+      // deleteProduct
+      .addCase(deleteProduct.pending, (state) => {
+        state.inventoryLoading = true
+        state.inventoryError = false
+      })
+      .addCase(deleteProduct.fulfilled, (state, { payload }) => {
+        state.inventoryLoading = false
+        // Remove from admin products
+        state.adminProducts = state.adminProducts.filter(product => product._id !== payload.productId)
+        // Update in regular products (mark as inactive)
+        const regularProductIndex = state.products.findIndex(product => product._id === payload.productId)
+        if (regularProductIndex !== -1) {
+          state.products[regularProductIndex].is_active = false
+        }
+        state.inventoryErrorMsg = ''
+      })
+      .addCase(deleteProduct.rejected, (state, { payload }) => {
+        state.inventoryLoading = false
+        state.inventoryError = true
+        state.inventoryErrorMsg = payload.msg || payload
+      })
+      // getLowStockProducts
+      .addCase(getLowStockProducts.pending, (state) => {
+        state.inventoryLoading = true
+        state.inventoryError = false
+      })
+      .addCase(getLowStockProducts.fulfilled, (state, { payload }) => {
+        state.inventoryLoading = false
+        state.lowStockProducts = payload
+        state.inventoryErrorMsg = ''
+      })
+      .addCase(getLowStockProducts.rejected, (state, { payload }) => {
+        state.inventoryLoading = false
+        state.inventoryError = true
+        state.inventoryErrorMsg = payload.msg || payload
+      })
+      // getInventoryStats
+      .addCase(getInventoryStats.pending, (state) => {
+        state.inventoryLoading = true
+        state.inventoryError = false
+      })
+      .addCase(getInventoryStats.fulfilled, (state, { payload }) => {
+        state.inventoryLoading = false
+        state.inventoryStats = payload
+        state.inventoryErrorMsg = ''
+      })
+      .addCase(getInventoryStats.rejected, (state, { payload }) => {
+        state.inventoryLoading = false
+        state.inventoryError = true
+        state.inventoryErrorMsg = payload.msg || payload
+      })
+      // bulkUpdateProducts
+      .addCase(bulkUpdateProducts.pending, (state) => {
+        state.bulkUpdateLoading = true
+        state.inventoryError = false
+      })
+      .addCase(bulkUpdateProducts.fulfilled, (state, { payload }) => {
+        state.bulkUpdateLoading = false
+        state.inventoryErrorMsg = ''
+        // Optionally refresh the admin products list after bulk update
+      })
+      .addCase(bulkUpdateProducts.rejected, (state, { payload }) => {
+        state.bulkUpdateLoading = false
+        state.inventoryError = true
+        state.inventoryErrorMsg = payload.msg || payload
+      })
   }
 })
 
