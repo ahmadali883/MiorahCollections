@@ -1,6 +1,7 @@
 import React from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
+import { getImageUrl } from "../../utils/imageUtils";
 import { 
   decrementItem, 
   decrementUserCartItem, 
@@ -173,9 +174,7 @@ const Cart = () => {
                         <img
                           src={
                             item.product?.images?.[0]?.image_url
-                              ? (item.product.images[0].image_url.startsWith('/uploads/')
-                                  ? `${IMAGE_BASE_URL}${item.product.images[0].image_url}`
-                                  : `${IMAGE_BASE_URL}/uploads/products/${item.product.images[0].image_url}`)
+                              ? getImageUrl(item.product.images[0].image_url)
                               : '/placeholder-image.jpg'
                           }
                           alt={item.product?.name || 'Product'}

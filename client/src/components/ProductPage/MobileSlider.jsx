@@ -1,5 +1,6 @@
 import { useDispatch, useSelector } from "react-redux";
 import { nextSlide, prevSlide } from "../../redux/reducers/productSlice";
+import { getImageUrl } from "../../utils/imageUtils";
 
 const MobileSlider = () => {
   const dispatch = useDispatch();
@@ -18,11 +19,7 @@ const MobileSlider = () => {
             <img
               className="object-cover"
               key={index}
-              src={
-                img.image_url?.startsWith('/uploads/')
-                  ? `${IMAGE_BASE_URL}${img.image_url}`
-                  : `${IMAGE_BASE_URL}/uploads/products/${img.image_url}`
-              }
+              src={getImageUrl(img.image_url)}
               alt={`Product view ${index + 1}`}
             />
           ))

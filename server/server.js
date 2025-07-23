@@ -28,8 +28,8 @@ app.use(express.json({ extended: false }));
 
 const PORT = process.env.PORT || 5000;
 
-// Serve uploaded files
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// Serve uploaded files (commented out since we're using Cloudinary)
+// app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // ROUTES
 app.use('/api/auth', require("./routes/auth"));

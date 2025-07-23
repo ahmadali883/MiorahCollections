@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { getImageUrl } from "../../utils/imageUtils";
 import { 
   getAdminProducts, 
   updateProduct, 
@@ -417,11 +418,7 @@ const InventoryManager = () => {
                       {product.images && product.images.length > 0 ? (
                         <img
                           className="h-10 w-10 rounded-md object-cover mr-3"
-                          src={
-                            product.images[0].image_url?.startsWith('/uploads/')
-                              ? `${IMAGE_BASE_URL}${product.images[0].image_url}`
-                              : `${IMAGE_BASE_URL}/uploads/products/${product.images[0].image_url}`
-                          }
+                          src={getImageUrl(product.images[0].image_url)}
                           alt={product.name}
                         />
                       ) : (

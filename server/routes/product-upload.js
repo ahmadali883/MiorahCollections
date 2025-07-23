@@ -5,14 +5,7 @@ const Product = require("../models/Product");
 const ProductImage = require("../models/ProductImage");
 const { verifyTokenAndAdmin } = require("../middleware/auth");
 const upload = require("../middleware/upload");
-const fs = require("fs");
-const path = require("path");
-
-// Ensure upload directory exists
-const uploadDir = path.join(__dirname, '../uploads/products');
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
+const { cloudinary } = require("../config/cloudinary");
 
 // Multer error handling middleware
 const handleMulterError = (req, res, next) => {
@@ -70,10 +63,14 @@ router.post(
   async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      // Delete uploaded files if validation fails
+      // Delete uploaded files from Cloudinary if validation fails
       if (req.files && req.files.length > 0) {
-        req.files.forEach(file => {
-          fs.unlinkSync(file.path);
+        req.files.forEach(async (file) => {
+          try {
+            await cloudinary.uploader.destroy(file.public_id);
+          } catch (error) {
+            console.error('Error deleting file from Cloudinary:', error);
+          }
         });
       }
       return res.status(400).json({ errors: errors.array() });
@@ -101,12 +98,13 @@ router.post(
       const imagePromises = [];
       if (req.files && req.files.length > 0) {
         req.files.forEach((file, index) => {
-          // Create relative URL for the image
-          const imageUrl = `/uploads/products/${file.filename}`;
+          // Use Cloudinary URL for the image
+          const imageUrl = file.path; // Cloudinary provides the full URL in file.path
           
           const productImage = new ProductImage({
             product_id: savedProduct._id,
             image_url: imageUrl,
+            public_id: file.public_id, // Store Cloudinary public_id for deletion
             is_primary: index === 0 // First image is primary
           });
           
@@ -139,10 +137,14 @@ router.put(
     try {
       const product = await Product.findById(req.params.id);
       if (!product) {
-        // Delete uploaded files if product not found
+        // Delete uploaded files from Cloudinary if product not found
         if (req.files && req.files.length > 0) {
-          req.files.forEach(file => {
-            fs.unlinkSync(file.path);
+          req.files.forEach(async (file) => {
+            try {
+              await cloudinary.uploader.destroy(file.public_id);
+            } catch (error) {
+              console.error('Error deleting file from Cloudinary:', error);
+            }
           });
         }
         return res.status(404).json({ msg: "Product not found" });
@@ -155,11 +157,12 @@ router.put(
         const isFirstUpload = existingImages.length === 0;
         
         req.files.forEach((file, index) => {
-          const imageUrl = `/uploads/products/${file.filename}`;
+          const imageUrl = file.path; // Cloudinary URL
           
           const productImage = new ProductImage({
             product_id: product._id,
             image_url: imageUrl,
+            public_id: file.public_id, // Store Cloudinary public_id
             is_primary: isFirstUpload && index === 0 // Only set primary if it's the first image ever uploaded
           });
           
@@ -192,13 +195,13 @@ router.delete("/images/:id", verifyTokenAndAdmin, async (req, res) => {
       return res.status(404).json({ msg: "Image not found" });
     }
 
-    // Extract filename from image URL
-    const filename = path.basename(image.image_url);
-    const filepath = path.join(__dirname, '../uploads/products', filename);
-
-    // Delete file from filesystem if it exists
-    if (fs.existsSync(filepath)) {
-      fs.unlinkSync(filepath);
+    // Delete file from Cloudinary if public_id exists
+    if (image.public_id) {
+      try {
+        await cloudinary.uploader.destroy(image.public_id);
+      } catch (error) {
+        console.error('Error deleting file from Cloudinary:', error);
+      }
     }
 
     // If removing primary image, set another image as primary
