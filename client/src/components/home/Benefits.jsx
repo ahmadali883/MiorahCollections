@@ -21,8 +21,8 @@ const Benefits = () => {
             Fast Delivery
           </h3>
           <p className="text-grayish-blue text-base">
-            Get your shoes as quickly as possible. Keep track to your deliveries
-            and enjoy our fast shippping right at your door step.
+            Get your jewellery as quickly as possible. Keep track of your deliveries
+            and enjoy our fast shipping right at your doorstep.
           </p>
         </div>
         <div className="detail px-4 mb-10 flex flex-col items-center text-center lg:text-left lg:items-start">
